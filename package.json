@@ -1,0 +1,21 @@
+{
+  "name": "root",
+  "version": "0.0.0",
+  "license": "UNLICENSED",
+  "scripts": {},
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@sydle/ui-nx-plugin": "^2.0.0",
+    "@sydle/ui-cli": "^1.0.0",
+    "nx": "^18.3.5",
+    "prettier": "^3.0.3"
+  },
+  "sydle-ui": {
+    "ui-api": {
+      "baseUrl": "https://arave-partner.sydle.one/#/"
+    }
+  }
+}

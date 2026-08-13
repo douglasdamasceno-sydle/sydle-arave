@@ -1,0 +1,4 @@
+*.d.ts
+docs.json
+pnpm-*
+**/components/**/readme.md

@@ -1,0 +1,31 @@
+{
+  "name": "home-page",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/home-page/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "dependsOn": ["clean", "^build", "externalize"],
+      "executor": "nx:run-script",
+      "options": {
+        "script": "build"
+      }
+    },
+    "dev": {
+      "dependsOn": ["clean", "^build", "externalize"],
+      "executor": "nx:run-script",
+      "options": {
+        "script": "dev"
+      }
+    },
+    "externalize": {
+      "executor": "@sydle/ui-nx-plugin:externalize-collections"
+    },
+    "externalize-undo": {
+      "executor": "@sydle/ui-nx-plugin:externalize-collections",
+      "options": {
+        "undo": true
+      }
+    }
+  }
+}

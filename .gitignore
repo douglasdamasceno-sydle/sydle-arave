@@ -1,0 +1,22 @@
+node_modules/
+dist/
+dist-storybook/
+bundle/
+zip/
+coverage/
+
+# Stencil
+www/
+loader/
+.stencil/
+
+# OS
+.DS_Store
+Thumbs.db
+UserInterfaceState.xcuserstate
+.env
+
+# Nx
+.nx
+
+.storage/

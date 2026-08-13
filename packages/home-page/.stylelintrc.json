@@ -1,0 +1,3 @@
+{
+  "extends": "@sydle/stylelint-config-sydle-ui"
+}

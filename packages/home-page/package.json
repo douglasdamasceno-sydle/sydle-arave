@@ -1,0 +1,51 @@
+{
+  "name": "@sydle/home-page",
+  "version": "0.1.0",
+  "license": "UNLICENSED",
+  "main": "dist/index.cjs.js",
+  "unpkg": "dist/home-page/home-page.esm.js",
+  "module": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist/",
+    "loader/"
+  ],
+  "scripts": {
+    "build": "stencil build --docs",
+    "clean": "rimraf www loader dist .stencil",
+    "dev": "stencil build --dev --watch --serve",
+    "lint": "eslint --ignore-path ../../.gitignore .",
+    "stylelint": "stylelint --ignore-path ../../.gitignore '**/*.{css,scss}'",
+    "publish-package": "ui push pkg",
+    "zip": "ZIP_FILENAME=$(basename $PWD)-${npm_package_version}.zip && mkdir -p zip && rimraf zip/$ZIP_FILENAME && cd www/ && zip -r -0 ../zip/$ZIP_FILENAME ./build"
+  },
+  "collection": "dist/collection/collection-manifest.json",
+  "collection:main": "dist/collection/index.js",
+  "es2015": "dist/esm/index.mjs",
+  "es2017": "dist/esm/index.mjs",
+  "sydle-ui": {
+    "componentPrefix": "sy-lib",
+    "external": [
+      "@sydle/ui-design-system",
+      "@sydle/ui-api"
+    ]
+  },
+  "dependencies": {
+    "@stencil/core": "^4.0.0",
+    "@sydle/ui-api": "^1.0.0"
+  },
+  "devDependencies": {
+    "@stencil/sass": ">3.0.0 <3.0.10",
+    "@sydle/eslint-config-sydle-ui": "^1.0.0",
+    "@sydle/stylelint-config-sydle-ui": "^1.0.0",
+    "@sydle/ui-design-system": "^2.0.0",
+    "@sydle/ui-external-libs": "^1.0.0",
+    "@sydle/ui-utils": "^2.0.0",
+    "@types/node": "^20.6.3",
+    "eslint": "~8.57.0",
+    "rimraf": "^5.0.1",
+    "rollup-plugin-node-polyfills": "^0.2.1",
+    "stylelint": "^15.10.3",
+    "typescript": "~5.1.6"
+  }
+}

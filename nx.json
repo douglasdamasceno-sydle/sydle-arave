@@ -1,0 +1,18 @@
+{
+  "extends": "nx/presets/npm.json",
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"]
+    },
+    "dev": {
+      "dependsOn": ["^build"]
+    },
+    "zip": {
+      "dependsOn": ["build"]
+    },
+    "publish-package": {
+      "dependsOn": ["zip"]
+    }
+  }
+}
