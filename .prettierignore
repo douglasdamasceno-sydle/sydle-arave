@@ -2,3 +2,6 @@
 docs.json
 pnpm-*
 **/components/**/readme.md
+# Ignorar arquivos de estilo para não quebrar sintaxe SCSS do Stencil
+**/*.scss
+**/*.css

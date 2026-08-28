@@ -28,7 +28,23 @@
     "external": [
       "@sydle/ui-design-system",
       "@sydle/ui-api"
-    ]
+    ],
+    "ui-api": {
+      "publish": {
+        "importFiles": [
+          {
+            "path": "build/index.esm.js",
+            "type": "importmap",
+            "key": "@sydle/home-page"
+          },
+          {
+            "path": "build/home-page.esm.js",
+            "type": "module"
+          }
+        ],
+        "packageId": "6a7e5605b2019b7b3d469ee6"
+      }
+    }
   },
   "dependencies": {
     "@stencil/core": "^4.0.0",

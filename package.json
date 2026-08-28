@@ -15,7 +15,7 @@
   },
   "sydle-ui": {
     "ui-api": {
-      "baseUrl": "https://arave-partner.sydle.one/#/"
+      "baseUrl": "https://arave-partner.sydle.one/api/1/"
     }
   }
 }
