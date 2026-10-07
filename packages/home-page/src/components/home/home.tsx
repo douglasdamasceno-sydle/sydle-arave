@@ -1,11 +1,42 @@
 import { Component, h, Host } from '@stencil/core';
 
+const ECM_BASE_URL = 'https://arave-partner.sydle.one/api/1/main/_ecm/_defaultFile/www';
+const LOGO_URL = `${ECM_BASE_URL}/br.com.arave/Imagens/Icons/arave.jpg/`;
+
+const CONTACT_EMAIL = 'contato@arave.com.br';
+const CONTACT_PHONE_DISPLAY = '(31) 99999-9999';
+const WHATSAPP_URL = 'https://wa.me/5531999999999';
+const ADDRESS_STREET = 'Rua Dom Oscar Romero, s/n';
+const ADDRESS_CITY = 'Nova Gameleira - Belo Horizonte/MG';
+const MAP_EMBED_URL =
+  'https://maps.google.com/maps?q=Rua%20Dom%20Oscar%20Romero,%20Nova%20Gameleira,%20Belo%20Horizonte&t=&z=16&ie=UTF8&iwloc=&output=embed';
+
+interface Sponsor {
+  name: string;
+  image?: string;
+}
+
+const SPONSORS: Sponsor[] = [
+  { name: 'SYDLE', image: `${ECM_BASE_URL}/Patrocinadores/SYDLE.png/` },
+  { name: 'Droga Maxi', image: `${ECM_BASE_URL}/Patrocinadores/drogaMaxi.jpeg/` },
+  { name: 'Patrocinador 03' },
+  { name: 'Patrocinador 04' },
+  { name: 'Patrocinador 05' },
+  { name: 'Patrocinador 06' },
+];
+
 @Component({
   tag: 'sy-lib-home',
   styleUrl: 'scss/index.scss',
   shadow: true,
 })
 export class Home {
+  private renderSponsorCard = (sponsor: Sponsor) => (
+    <div class="sponsor-card">
+      {sponsor.image ? <img src={sponsor.image} alt={sponsor.name} /> : <span>{sponsor.name}</span>}
+    </div>
+  );
+
   render() {
     return (
       <Host>
@@ -14,11 +45,7 @@ export class Home {
           <section class="hero-section">
             <div class="hero-content container">
               <div class="logo-wrapper">
-                <img
-                  class="main-logo"
-                  src="https://arave-partner.sydle.one/api/1/main/_ecm/_defaultFile/www/br.com.arave/Imagens/Icons/arave.jpg/"
-                  alt="Logo da Associação ARAVE"
-                />
+                <img class="main-logo" src={LOGO_URL} alt="Logo da Associação ARAVE" />
               </div>
 
               <h1>ARAVE</h1>
@@ -111,57 +138,8 @@ export class Home {
 
             <div class="sponsors-carousel">
               <div class="sponsors-track">
-                {/* --- BLOCO ORIGINAL --- */}
-                <div class="sponsor-card">
-                  <img
-                    src="https://arave-partner.sydle.one/api/1/main/_ecm/_defaultFile/www/Patrocinadores/SYDLE.png/"
-                    alt="SYDLE"
-                  />
-                </div>
-                <div class="sponsor-card">
-                  <img
-                    src="https://arave-partner.sydle.one/api/1/main/_ecm/_defaultFile/www/Patrocinadores/drogaMaxi.jpeg/"
-                    alt="SYDLE"
-                  />
-                </div>
-                <div class="sponsor-card">
-                  <span>Patrocinador 03</span>
-                </div>
-                <div class="sponsor-card">
-                  <span>Patrocinador 04</span>
-                </div>
-                <div class="sponsor-card">
-                  <span>Patrocinador 05</span>
-                </div>
-                <div class="sponsor-card">
-                  <span>Patrocinador 06</span>
-                </div>
-
-                {/* --- BLOCO DUPLICADO (Cópia exata para o loop infinito) --- */}
-                <div class="sponsor-card">
-                  <img
-                    src="https://arave-partner.sydle.one/api/1/main/_ecm/_defaultFile/www/Patrocinadores/SYDLE.png/"
-                    alt="SYDLE"
-                  />
-                </div>
-                <div class="sponsor-card">
-                  <img
-                    src="https://arave-partner.sydle.one/api/1/main/_ecm/_defaultFile/www/Patrocinadores/drogaMaxi.jpeg/"
-                    alt="SYDLE"
-                  />
-                </div>
-                <div class="sponsor-card">
-                  <span>Patrocinador 03</span>
-                </div>
-                <div class="sponsor-card">
-                  <span>Patrocinador 04</span>
-                </div>
-                <div class="sponsor-card">
-                  <span>Patrocinador 05</span>
-                </div>
-                <div class="sponsor-card">
-                  <span>Patrocinador 06</span>
-                </div>
+                {/* Lista duplicada (via array, não copiada no JSX) para o loop infinito do CSS */}
+                {[...SPONSORS, ...SPONSORS].map(this.renderSponsorCard)}
               </div>
             </div>
           </section>
@@ -173,12 +151,14 @@ export class Home {
                 <div class="location-info">
                   <span class="section-subtitle">Onde Estamos</span>
                   <h2>Venha nos Conhecer na Nova Gameleira</h2>
-                  <p class="address">📍 Rua Dom Oscar Romero, s/n, Nova Gameleira - Belo Horizonte/MG</p>
+                  <p class="address">
+                    📍 {ADDRESS_STREET}, {ADDRESS_CITY}
+                  </p>
                   <p class="details">Fácil acesso, ambiente seguro e familiar esperando por você.</p>
 
                   <div class="contact-box">
-                    <p>📧 contato@arave.com.br</p>
-                    <p>📞 (31) 99999-9999</p>
+                    <p>📧 {CONTACT_EMAIL}</p>
+                    <p>📞 {CONTACT_PHONE_DISPLAY}</p>
                     <div class="btn-space">
                       <sy-button color="primary" variant="filled">
                         Falar no WhatsApp
@@ -189,7 +169,7 @@ export class Home {
 
                 <div class="map-container">
                   <iframe
-                    src="https://maps.google.com/maps?q=Rua%20Dom%20Oscar%20Romero,%20Nova%20Gameleira,%20Belo%20Horizonte&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                    src={MAP_EMBED_URL}
                     width="100%"
                     height="100%"
                     style={{ border: '0' }}
@@ -207,10 +187,7 @@ export class Home {
               <div class="footer-grid">
                 <div class="footer-col brand-col">
                   <div class="footer-logo">
-                    <img
-                      src="https://arave-partner.sydle.one/api/1/main/_ecm/_defaultFile/www/br.com.arave/Imagens/Icons/arave.jpg/"
-                      alt="Logo ARAVE"
-                    />
+                    <img src={LOGO_URL} alt="Logo ARAVE" />
                     <h3>ARAVE</h3>
                   </div>
                   <p class="footer-desc">
@@ -245,12 +222,7 @@ export class Home {
                         <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
                       </svg>
                     </a>
-                    <a
-                      href="https://wa.me/5531999999999"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="WhatsApp"
-                    >
+                    <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
                       <svg
                         viewBox="0 0 24 24"
                         fill="none"
@@ -291,14 +263,14 @@ export class Home {
                 <div class="footer-col">
                   <h4>Endereço & Contato</h4>
                   <p class="address-text">
-                    📍 Rua Dom Oscar Romero, s/n
+                    📍 {ADDRESS_STREET}
                     <br />
-                    Nova Gameleira - Belo Horizonte/MG
+                    {ADDRESS_CITY}
                   </p>
                   <p class="contact-text">
-                    📧 contato@arave.com.br
+                    📧 {CONTACT_EMAIL}
                     <br />
-                    📞 (31) 99999-9999
+                    📞 {CONTACT_PHONE_DISPLAY}
                   </p>
                 </div>
               </div>
