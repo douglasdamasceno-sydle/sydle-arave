@@ -1,15 +1,112 @@
-import { Component, h, Host } from '@stencil/core';
+import { Component, h, Host, State } from '@stencil/core';
 
 const ECM_BASE_URL = 'https://arave-partner.sydle.one/api/1/main/_ecm/_defaultFile/www';
 const LOGO_URL = `${ECM_BASE_URL}/br.com.arave/Imagens/Icons/arave.jpg/`;
 
-const CONTACT_EMAIL = 'contato@arave.com.br';
-const CONTACT_PHONE_DISPLAY = '(31) 99999-9999';
-const WHATSAPP_URL = 'https://wa.me/5531999999999';
+const CONTACT_EMAIL = 'projetoarave@gmail.com';
+const CONTACT_PHONE_DISPLAY = '(31) 97333-7159';
+const CONTACT_PHONE_TEL = '+5531973337159';
+const WHATSAPP_URL = 'https://wa.me/5531973337159';
 const ADDRESS_STREET = 'Rua Dom Oscar Romero, s/n';
 const ADDRESS_CITY = 'Nova Gameleira - Belo Horizonte/MG';
-const MAP_EMBED_URL =
-  'https://maps.google.com/maps?q=Rua%20Dom%20Oscar%20Romero,%20Nova%20Gameleira,%20Belo%20Horizonte&t=&z=16&ie=UTF8&iwloc=&output=embed';
+const MAP_QUERY = 'Rua%20Dom%20Oscar%20Romero,%20Nova%20Gameleira,%20Belo%20Horizonte';
+const MAP_EMBED_URL = `https://maps.google.com/maps?q=${MAP_QUERY}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
+const DIRECTIONS_URL = `https://www.google.com/maps/dir/?api=1&destination=${MAP_QUERY}`;
+
+const SCHEDULE = [
+  { days: 'Qua - Sex', hours: '18:00 - 20:00' },
+  { days: 'Sábados', hours: '08:00 - 11:30' },
+];
+
+type Activity = 'campo' | 'futsal' | 'funcional' | 'artes';
+
+interface ScheduleItem {
+  activity: Activity;
+  day: string;
+  time: string;
+  place?: string;
+  group?: string;
+}
+
+/* Agenda semanal (os treinos de futsal acontecem em escolas parceiras, não na sede) */
+const WEEKLY_SCHEDULE: ScheduleItem[] = [
+  { activity: 'funcional', day: 'Terça', time: '17h', group: 'Terceira idade' },
+  { activity: 'futsal', day: 'Quarta', time: '18h', place: 'Escola João do Patrocínio', group: 'Crianças até 9 anos' },
+  {
+    activity: 'futsal',
+    day: 'Quinta',
+    time: '18h',
+    place: 'Escola Maria do Socorro',
+    group: 'Meninos acima de 9 anos',
+  },
+  { activity: 'campo', day: 'Sábado', time: '8h', place: 'Campo da Nova Gameleira', group: 'Meninos até 17 anos' },
+  { activity: 'artes', day: 'Sábado', time: 'após o treino de campo', group: 'Crianças até 17 anos' },
+];
+
+const ACTIVITY_LABEL: Record<Activity, string> = {
+  campo: 'Futebol de Campo',
+  futsal: 'Futsal',
+  funcional: 'Aula de Funcional',
+  artes: 'Aula de Artes',
+};
+
+const scheduleKey = (item: ScheduleItem) => `${item.activity}-${item.day}`;
+
+const WEEKDAY_INDEX: Record<string, number> = {
+  Domingo: 0,
+  Segunda: 1,
+  Terça: 2,
+  Quarta: 3,
+  Quinta: 4,
+  Sexta: 5,
+  Sábado: 6,
+};
+
+/* Agenda agrupada por dia, na ordem da semana */
+const SCHEDULE_BY_DAY = Object.keys(WEEKDAY_INDEX)
+  .map((day) => ({ day, items: WEEKLY_SCHEDULE.filter((item) => item.day === day) }))
+  .filter((group) => group.items.length > 0);
+
+/* Resumo curto de uma atividade, ex.: "Qua e Qui, 18h" */
+const scheduleSummary = (activity: Activity) => {
+  const items = WEEKLY_SCHEDULE.filter((item) => item.activity === activity);
+  const days = items.map((item) => item.day.slice(0, 3)).join(' e ');
+  const times = Array.from(new Set(items.map((item) => item.time))).join(' / ');
+  return `${days}, ${times}`;
+};
+
+const HERO_PHOTO_URL = `${ECM_BASE_URL}/pascoa.jpg/`;
+
+/* Ícones de linha (24x24) usados nos cards de informação */
+const ICON_PATHS: Record<string, string[]> = {
+  pin: ['M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z', 'M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z'],
+  clock: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z', 'M12 6v6l4 2'],
+  ball: [
+    'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z',
+    'm12 7 4.5 3.3-1.7 5.2H9.2l-1.7-5.2Z',
+    'M12 2v5M21.5 9.2l-5 1.1M18 20l-3.2-4.5M6 20l3.2-4.5M2.5 9.2l5 1.1',
+  ],
+  mail: ['M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z', 'm22 6-10 7L2 6'],
+  phone: [
+    'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92Z',
+  ],
+};
+
+const renderIcon = (name: string) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    {ICON_PATHS[name].map((d) => (
+      <path key={d} d={d}></path>
+    ))}
+  </svg>
+);
 
 interface Sponsor {
   name: string;
@@ -31,6 +128,29 @@ const SPONSORS: Sponsor[] = [
   shadow: true,
 })
 export class Home {
+  @State() contactOpen = false;
+
+  private activitiesEl?: HTMLElement;
+
+  private openContact = () => (this.contactOpen = true);
+  private scrollToActivities = () => this.activitiesEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  private closeContact = () => (this.contactOpen = false);
+
+  private renderSchedule = (activity: Activity) => (
+    <ul class="card-schedule">
+      {WEEKLY_SCHEDULE.filter((item) => item.activity === activity).map((item) => (
+        <li key={scheduleKey(item)}>
+          <span class="schedule-when">
+            {item.day} · {item.time}
+          </span>
+          {(item.place || item.group) && (
+            <span class="schedule-where">{[item.place, item.group].filter(Boolean).join(' · ')}</span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+
   private renderSponsorCard = (sponsor: Sponsor) => (
     <div class="sponsor-card">
       {sponsor.image ? <img src={sponsor.image} alt={sponsor.name} /> : <span>{sponsor.name}</span>}
@@ -41,24 +161,76 @@ export class Home {
     return (
       <Host>
         <div class="arave-landing-page">
-          {/* Hero Section COM a onda na base */}
+          {/* Hero: texto à esquerda, foto da turma à direita */}
           <section class="hero-section">
-            <div class="hero-content container">
-              <div class="logo-wrapper">
-                <img class="main-logo" src={LOGO_URL} alt="Logo da Associação ARAVE" />
+            <div class="hero-inner container">
+              <div class="hero-content">
+                <div class="hero-brand">
+                  <img class="hero-logo" src={LOGO_URL} alt="" />
+                  <span>Associação Recreativa dos Amigos da Vila Embaúba</span>
+                </div>
+
+                <h1>
+                  ARAVE
+                  <span class="hero-tagline">Esporte, Lazer e Comunidade</span>
+                </h1>
+                <p>
+                  O ponto de encontro da família em BH. Treinos, cultura, futebol e momentos inesquecíveis em um só
+                  lugar.
+                </p>
+
+                <div class="hero-actions">
+                  <sy-button color="primary" variant="filled" size="large" onClick={this.openContact}>
+                    Associe-se Agora
+                  </sy-button>
+                  <button type="button" class="hero-link" onClick={this.scrollToActivities}>
+                    Ver atividades
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 5v14M19 12l-7 7-7-7"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <ul class="hero-highlights">
+                  <li>
+                    <strong>{Object.keys(ACTIVITY_LABEL).length}</strong> modalidades
+                  </li>
+                  <li>
+                    Da <strong>criançada</strong> à <strong>terceira idade</strong>
+                  </li>
+                  <li>
+                    <strong>Nova Gameleira</strong> · BH
+                  </li>
+                </ul>
               </div>
 
-              <h1>ARAVE</h1>
-              <h2>Esporte, Lazer e Comunidade</h2>
-              <p>
-                O ponto de encontro da família em BH. Treinos, cultura, futebol e momentos inesquecíveis em um só lugar.
-              </p>
-
-              <div class="cta-wrapper">
-                <sy-button color="primary" variant="filled" size="large">
-                  Associe-se Agora
-                </sy-button>
-              </div>
+              <figure class="hero-media">
+                <div class="hero-photo">
+                  <img src={HERO_PHOTO_URL} alt="Crianças e professores da ARAVE comemorando juntos no campo" />
+                </div>
+                <div class="hero-chip chip-top" aria-hidden="true">
+                  <span class="chip-icon">{renderIcon('ball')}</span>
+                  <span>
+                    <strong>Futsal</strong>
+                    {scheduleSummary('futsal')}
+                  </span>
+                </div>
+                <div class="hero-chip chip-bottom" aria-hidden="true">
+                  <span class="chip-icon">{renderIcon('ball')}</span>
+                  <span>
+                    <strong>Futebol de Campo</strong>
+                    {scheduleSummary('campo')}
+                  </span>
+                </div>
+              </figure>
             </div>
 
             {/* ONDA MANTIDA APENAS NO HEADER */}
@@ -84,7 +256,7 @@ export class Home {
           </section>
 
           {/* Modalidades Esportivas (Sem onda no final) */}
-          <section class="activities-section">
+          <section class="activities-section" ref={(el) => (this.activitiesEl = el)}>
             <div class="container">
               <span class="section-subtitle">O que acontece na ARAVE</span>
               <h2 class="section-title">Modalidades & Atividades</h2>
@@ -95,7 +267,8 @@ export class Home {
                   <div class="card-badge">Esporte</div>
                   <div class="card-info">
                     <h3>Futebol de Campo</h3>
-                    <p>Gramado bem cuidado para os tradicionais campeonatos e peladas de fim de semana.</p>
+                    <p>Treino da garotada no gramado da Nova Gameleira, todo fim de semana.</p>
+                    {this.renderSchedule('campo')}
                   </div>
                 </div>
 
@@ -104,7 +277,8 @@ export class Home {
                   <div class="card-badge">Esporte</div>
                   <div class="card-info">
                     <h3>Futebol de Salão</h3>
-                    <p>Quadra coberta e estruturada para treinos e partidas aceleradas em qualquer clima.</p>
+                    <p>Treinos semanais em escolas parceiras, com turmas separadas por idade.</p>
+                    {this.renderSchedule('futsal')}
                   </div>
                 </div>
 
@@ -113,7 +287,8 @@ export class Home {
                   <div class="card-badge">Saúde</div>
                   <div class="card-info">
                     <h3>Aula de Funcional</h3>
-                    <p>Exercícios dinâmicos para aumentar a disposição, queimar calorias e fortalecer a saúde.</p>
+                    <p>Exercícios para a terceira idade: mais disposição, equilíbrio e saúde no dia a dia.</p>
+                    {this.renderSchedule('funcional')}
                   </div>
                 </div>
 
@@ -122,9 +297,49 @@ export class Home {
                   <div class="card-badge">Cultura</div>
                   <div class="card-info">
                     <h3>Aulas de Artes</h3>
-                    <p>Espaço de criatividade, expressão e oficinas culturais para crianças e adultos.</p>
+                    <p>Espaço de criatividade, expressão e oficinas culturais para crianças e adolescentes.</p>
+                    {this.renderSchedule('artes')}
                   </div>
                 </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Agenda semanal */}
+          <section class="schedule-section">
+            <div class="container">
+              <span class="section-subtitle">Programe-se</span>
+              <h2 class="section-title">Agenda semanal</h2>
+              <p class="section-lead">Escolha sua turma e venha fazer parte da família ARAVE.</p>
+
+              <div class="schedule-grid">
+                {SCHEDULE_BY_DAY.map(({ day, items }) => {
+                  const isToday = WEEKDAY_INDEX[day] === new Date().getDay();
+                  return (
+                    <article key={day} class={{ 'day-card': true, 'is-today': isToday }}>
+                      <header class="day-header">
+                        <h3>{day}</h3>
+                        {isToday && <span class="today-badge">Hoje</span>}
+                      </header>
+
+                      <ul class="session-list">
+                        {items.map((item) => (
+                          <li key={scheduleKey(item)} class={`session session-${item.activity}`}>
+                            <span class="session-time">{item.time}</span>
+                            <strong class="session-title">{ACTIVITY_LABEL[item.activity]}</strong>
+                            {item.place && (
+                              <span class="session-place">
+                                {renderIcon('pin')}
+                                {item.place}
+                              </span>
+                            )}
+                            {item.group && <span class="session-group">{item.group}</span>}
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -147,29 +362,72 @@ export class Home {
           {/* Localização e Contato */}
           <section class="location-section">
             <div class="container">
-              <div class="location-grid">
-                <div class="location-info">
-                  <span class="section-subtitle">Onde Estamos</span>
-                  <h2>Venha nos Conhecer na Nova Gameleira</h2>
-                  <p class="address">
-                    📍 {ADDRESS_STREET}, {ADDRESS_CITY}
-                  </p>
-                  <p class="details">Fácil acesso, ambiente seguro e familiar esperando por você.</p>
+              <span class="section-subtitle">Onde Estamos</span>
+              <h2 class="section-title">Venha nos conhecer na Nova Gameleira</h2>
+              <p class="section-lead">Fácil acesso, ambiente seguro e familiar esperando por você.</p>
 
-                  <div class="contact-box">
-                    <p>📧 {CONTACT_EMAIL}</p>
-                    <p>📞 {CONTACT_PHONE_DISPLAY}</p>
-                    <div class="btn-space">
-                      <sy-button color="primary" variant="filled">
-                        Falar no WhatsApp
-                      </sy-button>
-                    </div>
+              <div class="location-card">
+                <div class="location-info">
+                  <ul class="info-list">
+                    <li class="info-item">
+                      <span class="info-icon">{renderIcon('pin')}</span>
+                      <div class="info-text">
+                        <span class="info-label">Endereço</span>
+                        <span class="info-value">
+                          {ADDRESS_STREET}
+                          <br />
+                          {ADDRESS_CITY}
+                        </span>
+                      </div>
+                    </li>
+
+                    <li class="info-item">
+                      <span class="info-icon">{renderIcon('clock')}</span>
+                      <div class="info-text">
+                        <span class="info-label">Funcionamento</span>
+                        {SCHEDULE.map((item) => (
+                          <span key={item.days} class="info-value">
+                            <strong>{item.days}:</strong> {item.hours}
+                          </span>
+                        ))}
+                      </div>
+                    </li>
+
+                    <li class="info-item">
+                      <span class="info-icon">{renderIcon('mail')}</span>
+                      <div class="info-text">
+                        <span class="info-label">E-mail</span>
+                        <a class="info-value" href={`mailto:${CONTACT_EMAIL}`}>
+                          {CONTACT_EMAIL}
+                        </a>
+                      </div>
+                    </li>
+
+                    <li class="info-item">
+                      <span class="info-icon">{renderIcon('phone')}</span>
+                      <div class="info-text">
+                        <span class="info-label">Telefone</span>
+                        <a class="info-value" href={`tel:${CONTACT_PHONE_TEL}`}>
+                          {CONTACT_PHONE_DISPLAY}
+                        </a>
+                      </div>
+                    </li>
+                  </ul>
+
+                  <div class="location-actions">
+                    <sy-button color="primary" variant="filled" href={WHATSAPP_URL} target="_blank">
+                      Falar no WhatsApp
+                    </sy-button>
+                    <sy-button color="primary" variant="outlined" href={DIRECTIONS_URL} target="_blank">
+                      Como chegar
+                    </sy-button>
                   </div>
                 </div>
 
                 <div class="map-container">
                   <iframe
                     src={MAP_EMBED_URL}
+                    title="Mapa com a localização da ARAVE"
                     width="100%"
                     height="100%"
                     style={{ border: '0' }}
@@ -251,12 +509,11 @@ export class Home {
                 <div class="footer-col">
                   <h4>Funcionamento</h4>
                   <ul class="schedule-list">
-                    <li>
-                      <strong>Qua - Sex:</strong> 18:00 - 20:00
-                    </li>
-                    <li>
-                      <strong>Sábados:</strong> 08:00 - 11:30
-                    </li>
+                    {SCHEDULE.map((item) => (
+                      <li key={item.days}>
+                        <strong>{item.days}:</strong> {item.hours}
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
@@ -282,6 +539,12 @@ export class Home {
             </div>
           </footer>
         </div>
+
+        <sy-lib-contact-modal
+          open={this.contactOpen}
+          defaultSubject="Quero me associar à ARAVE"
+          onSyLibContactModalClose={this.closeContact}
+        ></sy-lib-contact-modal>
       </Host>
     );
   }

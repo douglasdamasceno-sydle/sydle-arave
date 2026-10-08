@@ -1,11 +1,111 @@
 {
-  "timestamp": "2026-09-17T18:16:43",
+  "timestamp": "2026-10-08T00:51:23",
   "compiler": {
     "name": "@stencil/core",
     "version": "4.44.0",
     "typescriptVersion": "5.8.3"
   },
   "components": [
+    {
+      "filePath": "src/components/contact-modal/contact-modal.tsx",
+      "encapsulation": "shadow",
+      "tag": "sy-lib-contact-modal",
+      "readme": "# sy-lib-contact-modal\n\n\n",
+      "docs": "",
+      "docsTags": [],
+      "usage": {},
+      "props": [
+        {
+          "name": "defaultSubject",
+          "type": "string",
+          "complexType": {
+            "original": "string",
+            "resolved": "string",
+            "references": {}
+          },
+          "mutable": false,
+          "attr": "default-subject",
+          "reflectToAttr": false,
+          "docs": "Assunto pré-preenchido ao abrir o modal.",
+          "docsTags": [
+            {
+              "name": "default",
+              "text": "''"
+            }
+          ],
+          "default": "''",
+          "values": [
+            {
+              "type": "string"
+            }
+          ],
+          "optional": false,
+          "required": false,
+          "getter": false,
+          "setter": false
+        },
+        {
+          "name": "open",
+          "type": "boolean",
+          "complexType": {
+            "original": "boolean",
+            "resolved": "boolean",
+            "references": {}
+          },
+          "mutable": false,
+          "attr": "open",
+          "reflectToAttr": false,
+          "docs": "Controla a abertura do modal.",
+          "docsTags": [
+            {
+              "name": "default",
+              "text": "false"
+            }
+          ],
+          "default": "false",
+          "values": [
+            {
+              "type": "boolean"
+            }
+          ],
+          "optional": false,
+          "required": false,
+          "getter": false,
+          "setter": false
+        }
+      ],
+      "methods": [],
+      "events": [
+        {
+          "event": "syLibContactModalClose",
+          "detail": "void",
+          "bubbles": true,
+          "complexType": {
+            "original": "void",
+            "resolved": "void",
+            "references": {}
+          },
+          "cancelable": true,
+          "composed": true,
+          "docs": "Disparado quando o usuário fecha o modal (botão, Esc ou clique fora).",
+          "docsTags": []
+        }
+      ],
+      "listeners": [],
+      "styles": [],
+      "slots": [],
+      "parts": [],
+      "states": [],
+      "dependents": [
+        "sy-lib-home"
+      ],
+      "dependencies": [],
+      "dependencyGraph": {
+        "sy-lib-home": [
+          "sy-lib-contact-modal"
+        ]
+      }
+    },
     {
       "filePath": "src/components/home/home.tsx",
       "encapsulation": "shadow",
@@ -23,8 +123,14 @@
       "parts": [],
       "states": [],
       "dependents": [],
-      "dependencies": [],
-      "dependencyGraph": {}
+      "dependencies": [
+        "sy-lib-contact-modal"
+      ],
+      "dependencyGraph": {
+        "sy-lib-home": [
+          "sy-lib-contact-modal"
+        ]
+      }
     }
   ],
   "typeLibrary": {}

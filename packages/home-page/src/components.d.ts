@@ -6,10 +6,43 @@
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 export namespace Components {
+    interface SyLibContactModal {
+        /**
+          * Assunto pré-preenchido ao abrir o modal.
+          * @default ''
+         */
+        "defaultSubject": string;
+        /**
+          * Controla a abertura do modal.
+          * @default false
+         */
+        "open": boolean;
+    }
     interface SyLibHome {
     }
 }
+export interface SyLibContactModalCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLSyLibContactModalElement;
+}
 declare global {
+    interface HTMLSyLibContactModalElementEventMap {
+        "syLibContactModalClose": void;
+    }
+    interface HTMLSyLibContactModalElement extends Components.SyLibContactModal, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLSyLibContactModalElementEventMap>(type: K, listener: (this: HTMLSyLibContactModalElement, ev: SyLibContactModalCustomEvent<HTMLSyLibContactModalElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLSyLibContactModalElementEventMap>(type: K, listener: (this: HTMLSyLibContactModalElement, ev: SyLibContactModalCustomEvent<HTMLSyLibContactModalElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLSyLibContactModalElement: {
+        prototype: HTMLSyLibContactModalElement;
+        new (): HTMLSyLibContactModalElement;
+    };
     interface HTMLSyLibHomeElement extends Components.SyLibHome, HTMLStencilElement {
     }
     var HTMLSyLibHomeElement: {
@@ -17,13 +50,37 @@ declare global {
         new (): HTMLSyLibHomeElement;
     };
     interface HTMLElementTagNameMap {
+        "sy-lib-contact-modal": HTMLSyLibContactModalElement;
         "sy-lib-home": HTMLSyLibHomeElement;
     }
 }
 declare namespace LocalJSX {
+    interface SyLibContactModal {
+        /**
+          * Assunto pré-preenchido ao abrir o modal.
+          * @default ''
+         */
+        "defaultSubject"?: string;
+        /**
+          * Disparado quando o usuário fecha o modal (botão, Esc ou clique fora).
+         */
+        "onSyLibContactModalClose"?: (event: SyLibContactModalCustomEvent<void>) => void;
+        /**
+          * Controla a abertura do modal.
+          * @default false
+         */
+        "open"?: boolean;
+    }
     interface SyLibHome {
     }
+
+    interface SyLibContactModalAttributes {
+        "open": boolean;
+        "defaultSubject": string;
+    }
+
     interface IntrinsicElements {
+        "sy-lib-contact-modal": Omit<SyLibContactModal, keyof SyLibContactModalAttributes> & { [K in keyof SyLibContactModal & keyof SyLibContactModalAttributes]?: SyLibContactModal[K] } & { [K in keyof SyLibContactModal & keyof SyLibContactModalAttributes as `attr:${K}`]?: SyLibContactModalAttributes[K] } & { [K in keyof SyLibContactModal & keyof SyLibContactModalAttributes as `prop:${K}`]?: SyLibContactModal[K] };
         "sy-lib-home": SyLibHome;
     }
 }
@@ -31,6 +88,7 @@ export { LocalJSX as JSX };
 declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
+            "sy-lib-contact-modal": LocalJSX.IntrinsicElements["sy-lib-contact-modal"] & JSXBase.HTMLAttributes<HTMLSyLibContactModalElement>;
             "sy-lib-home": LocalJSX.IntrinsicElements["sy-lib-home"] & JSXBase.HTMLAttributes<HTMLSyLibHomeElement>;
         }
     }

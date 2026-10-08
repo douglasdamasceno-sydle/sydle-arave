@@ -1,0 +1,27 @@
+/* Tokens compartilhados entre os componentes da ARAVE */
+@mixin arave-tokens {
+  /* Paleta Oficial ARAVE (Roxo, Amarelo e Branco) */
+  --arave-purple-darker: #1a0b30;
+  --arave-purple-dark: #2d1350;
+  --arave-purple-main: #3f1b6c;
+  --arave-purple-light: #5a2898;
+  --arave-purple-tint: #ede5f7;
+  --arave-yellow-main: #ffb800;
+  --arave-yellow-dark: #e6a300;
+  --arave-yellow-soft: rgb(255 184 0 / 14%);
+  --arave-bg-soft: #f8f5fc;
+  --arave-text-dark: #1f1133;
+  --arave-text-muted: #5c526b;
+  --arave-white: #fff;
+
+  /* Tokens de layout e movimento */
+  --arave-radius-sm: 12px;
+  --arave-radius-md: 20px;
+  --arave-radius-lg: 28px;
+  --arave-section-space: clamp(72px, 9vw, 120px);
+  --arave-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --arave-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --arave-shadow-sm: 0 2px 8px rgb(45 19 80 / 6%);
+  --arave-shadow-md: 0 12px 32px -8px rgb(45 19 80 / 14%);
+  --arave-shadow-lg: 0 32px 64px -16px rgb(45 19 80 / 28%);
+}
