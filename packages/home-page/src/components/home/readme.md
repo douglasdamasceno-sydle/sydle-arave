@@ -9,11 +9,13 @@
 
 ### Depends on
 
+- [sy-lib-events-calendar](../events-calendar)
 - [sy-lib-contact-modal](../contact-modal)
 
 ### Graph
 ```mermaid
 graph TD;
+  sy-lib-home --> sy-lib-events-calendar
   sy-lib-home --> sy-lib-contact-modal
   style sy-lib-home fill:#f9f,stroke:#333,stroke-width:4px
 ```

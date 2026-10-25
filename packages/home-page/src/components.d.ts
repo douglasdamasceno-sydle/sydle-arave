@@ -18,6 +18,8 @@ export namespace Components {
          */
         "open": boolean;
     }
+    interface SyLibEventsCalendar {
+    }
     interface SyLibHome {
     }
 }
@@ -43,6 +45,12 @@ declare global {
         prototype: HTMLSyLibContactModalElement;
         new (): HTMLSyLibContactModalElement;
     };
+    interface HTMLSyLibEventsCalendarElement extends Components.SyLibEventsCalendar, HTMLStencilElement {
+    }
+    var HTMLSyLibEventsCalendarElement: {
+        prototype: HTMLSyLibEventsCalendarElement;
+        new (): HTMLSyLibEventsCalendarElement;
+    };
     interface HTMLSyLibHomeElement extends Components.SyLibHome, HTMLStencilElement {
     }
     var HTMLSyLibHomeElement: {
@@ -51,6 +59,7 @@ declare global {
     };
     interface HTMLElementTagNameMap {
         "sy-lib-contact-modal": HTMLSyLibContactModalElement;
+        "sy-lib-events-calendar": HTMLSyLibEventsCalendarElement;
         "sy-lib-home": HTMLSyLibHomeElement;
     }
 }
@@ -71,6 +80,8 @@ declare namespace LocalJSX {
          */
         "open"?: boolean;
     }
+    interface SyLibEventsCalendar {
+    }
     interface SyLibHome {
     }
 
@@ -81,6 +92,7 @@ declare namespace LocalJSX {
 
     interface IntrinsicElements {
         "sy-lib-contact-modal": Omit<SyLibContactModal, keyof SyLibContactModalAttributes> & { [K in keyof SyLibContactModal & keyof SyLibContactModalAttributes]?: SyLibContactModal[K] } & { [K in keyof SyLibContactModal & keyof SyLibContactModalAttributes as `attr:${K}`]?: SyLibContactModalAttributes[K] } & { [K in keyof SyLibContactModal & keyof SyLibContactModalAttributes as `prop:${K}`]?: SyLibContactModal[K] };
+        "sy-lib-events-calendar": SyLibEventsCalendar;
         "sy-lib-home": SyLibHome;
     }
 }
@@ -89,6 +101,7 @@ declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
             "sy-lib-contact-modal": LocalJSX.IntrinsicElements["sy-lib-contact-modal"] & JSXBase.HTMLAttributes<HTMLSyLibContactModalElement>;
+            "sy-lib-events-calendar": LocalJSX.IntrinsicElements["sy-lib-events-calendar"] & JSXBase.HTMLAttributes<HTMLSyLibEventsCalendarElement>;
             "sy-lib-home": LocalJSX.IntrinsicElements["sy-lib-home"] & JSXBase.HTMLAttributes<HTMLSyLibHomeElement>;
         }
     }

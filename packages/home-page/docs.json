@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-25T17:51:07",
+  "timestamp": "2026-10-25T18:24:26",
   "compiler": {
     "name": "@stencil/core",
     "version": "4.44.0",
@@ -107,6 +107,32 @@
       }
     },
     {
+      "filePath": "src/components/events-calendar/events-calendar.tsx",
+      "encapsulation": "shadow",
+      "tag": "sy-lib-events-calendar",
+      "readme": "# sy-lib-events-calendar\n\n\n",
+      "docs": "",
+      "docsTags": [],
+      "usage": {},
+      "props": [],
+      "methods": [],
+      "events": [],
+      "listeners": [],
+      "styles": [],
+      "slots": [],
+      "parts": [],
+      "states": [],
+      "dependents": [
+        "sy-lib-home"
+      ],
+      "dependencies": [],
+      "dependencyGraph": {
+        "sy-lib-home": [
+          "sy-lib-events-calendar"
+        ]
+      }
+    },
+    {
       "filePath": "src/components/home/home.tsx",
       "encapsulation": "shadow",
       "tag": "sy-lib-home",
@@ -124,10 +150,12 @@
       "states": [],
       "dependents": [],
       "dependencies": [
+        "sy-lib-events-calendar",
         "sy-lib-contact-modal"
       ],
       "dependencyGraph": {
         "sy-lib-home": [
+          "sy-lib-events-calendar",
           "sy-lib-contact-modal"
         ]
       }
