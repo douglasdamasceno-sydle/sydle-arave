@@ -3,12 +3,26 @@
 :host {
   @include arave-tokens;
 
+  /* O tema da aplicação não define cor primária (o padrão do DS é preto); botões usam o roxo da marca */
+  --sy-button-color-primary: var(--arave-purple-main);
+  --sy-button-color-primary-contrast: var(--arave-white);
+  --sy-button-color-primary-hover: var(--arave-purple-light);
+  --sy-button-color-primary-active: var(--arave-purple-dark);
+  --sy-button-font-weight: 700;
+
   display: block;
   font-family: 'Open Sans', 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
   color: var(--arave-text-dark);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizelegibility;
+}
+
+/* O sy-button não tem tamanho grande: altura e respiro vêm das custom properties (alvo de toque ≥ 44px) */
+.hero-actions sy-button,
+.location-actions sy-button {
+  --sy-button-height: 48px;
+  --sy-button-padding-x: 24px;
 }
 
 .arave-landing-page {
@@ -36,8 +50,10 @@
 
 /* "Eyebrow" em formato de pílula acima dos títulos */
 .section-subtitle {
-  display: table;
-  padding: 6px 16px 6px 14px;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 16px 6px 12px;
   margin: 0 auto 16px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -50,9 +66,9 @@
 
   &::before {
     display: inline-block;
-    width: 7px;
-    height: 7px;
-    margin-right: 10px;
+    width: 8px;
+    height: 8px;
+    margin-right: 8px;
     vertical-align: 1px;
     content: '';
     background-color: var(--arave-yellow-main);
@@ -94,6 +110,11 @@
     radial-gradient(ellipse 45% 55% at 100% 100%, rgb(255 184 0 / 16%) 0%, transparent 70%),
     linear-gradient(160deg, var(--arave-purple-dark) 0%, var(--arave-purple-darker) 70%);
 
+  /* Menos respiro no celular para a foto não ficar abaixo da dobra */
+  @media (width <= 640px) {
+    padding: 56px 0 128px;
+  }
+
   /* Textura de pontos sutil, esmaecendo nas bordas */
   &::before {
     position: absolute;
@@ -117,6 +138,10 @@
     @media (width <= 900px) {
       grid-template-columns: 1fr;
     }
+
+    @media (width <= 640px) {
+      gap: 32px;
+    }
   }
 
   .hero-content {
@@ -127,6 +152,12 @@
     @media (width <= 900px) {
       align-items: center;
       text-align: center;
+    }
+
+    /* No celular o texto fica à esquerda, no mesmo eixo do card "Sobre" logo abaixo */
+    @media (width <= 640px) {
+      align-items: flex-start;
+      text-align: left;
     }
 
     > * {
@@ -144,7 +175,7 @@
     gap: 12px;
     align-items: center;
     max-width: 100%;
-    padding: 6px 18px 6px 6px;
+    padding: 6px 16px 6px 6px;
     font-size: 0.8rem;
     font-weight: 600;
     line-height: 1.3;
@@ -155,8 +186,16 @@
     border-radius: 999px;
     backdrop-filter: blur(8px);
 
+    /* O nome quebra em 2 linhas no celular e na coluna estreita de 901–1024px; sem a pílula não vira "cápsula gorda" */
+    @media (width <= 640px), (900px < width <= 1024px) {
+      padding: 0;
+      background: none;
+      border: 0;
+      backdrop-filter: none;
+    }
+
     @media (width <= 640px) {
-      font-size: 0.72rem;
+      font-size: 0.75rem;
     }
   }
 
@@ -173,9 +212,9 @@
   h1 {
     display: flex;
     flex-direction: column;
-    margin: 28px 0 20px;
+    margin: 32px 0 20px;
     font-size: clamp(3.5rem, 8vw, 6rem);
-    font-weight: 900;
+    font-weight: 800; /* Peso máximo da Open Sans */
     line-height: 0.95;
     letter-spacing: 0.04em;
     background: linear-gradient(180deg, var(--arave-white) 35%, #d9c8f2 100%);
@@ -187,6 +226,7 @@
       font-size: clamp(1.25rem, 2.6vw, 1.75rem);
       font-weight: 700;
       line-height: 1.2;
+      text-wrap: balance;
       letter-spacing: 0;
       -webkit-text-fill-color: var(--arave-yellow-main);
     }
@@ -194,7 +234,7 @@
 
   p {
     max-width: 540px;
-    margin: 0 0 36px;
+    margin: 0 0 32px;
     font-size: clamp(1rem, 1.5vw, 1.15rem);
     line-height: 1.7;
     color: rgb(255 255 255 / 80%);
@@ -204,14 +244,36 @@
   .hero-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 12px;
     align-items: center;
 
     @media (width <= 900px) {
       justify-content: center;
     }
 
+    /* Botões empilhados com a mesma largura, em vez de quebrar desiguais */
+    @media (width <= 480px) {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+
+      sy-button {
+        width: 100%;
+      }
+
+      .hero-link {
+        justify-content: center;
+        width: 100%;
+      }
+    }
+
+    /* CTA principal em amarelo sobre o fundo roxo do hero */
     sy-button {
+      --sy-button-color-primary: var(--arave-yellow-main);
+      --sy-button-color-primary-contrast: var(--arave-purple-darker);
+      --sy-button-color-primary-hover: var(--arave-yellow-dark);
+      --sy-button-color-primary-active: var(--arave-yellow-dark);
+
       filter: drop-shadow(0 12px 28px rgb(255 184 0 / 30%));
       transition: transform 0.35s var(--arave-ease-spring);
 
@@ -225,7 +287,8 @@
     display: inline-flex;
     gap: 8px;
     align-items: center;
-    padding: 11px 20px;
+    min-height: 48px; /* Mesma altura do sy-button ao lado */
+    padding: 0 24px;
     font-family: inherit;
     font-size: 0.95rem;
     font-weight: 600;
@@ -263,7 +326,7 @@
   .hero-highlights {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     padding: 0;
     margin: 40px 0 0;
     list-style: none;
@@ -273,17 +336,17 @@
     }
 
     @media (width <= 640px) {
-      gap: 8px;
-      margin-top: 32px;
+      justify-content: flex-start;
+      margin-top: 24px;
     }
 
     li {
-      padding: 8px 14px;
-      font-size: 0.85rem;
+      padding: 8px 16px;
+      font-size: 0.875rem;
       color: rgb(255 255 255 / 72%);
 
       @media (width <= 640px) {
-        padding: 6px 11px;
+        padding: 6px 12px;
         font-size: 0.75rem;
       }
 
@@ -312,12 +375,18 @@
 
     &::before {
       position: absolute;
-      inset: 18px -14px -14px 18px;
+      inset: 16px -12px -12px 16px;
       z-index: -1;
       content: '';
       background: linear-gradient(135deg, var(--arave-yellow-main), var(--arave-yellow-dark));
-      border-radius: 32px;
+      border-radius: var(--arave-radius-lg);
       rotate: 3deg;
+
+      /* Menos deslocamento para a placa não encostar na borda da tela quando a foto ocupa a largura toda */
+      @media (width <= 900px) {
+        inset: 12px -8px -8px 12px;
+        rotate: 2deg;
+      }
     }
   }
 
@@ -325,7 +394,7 @@
     aspect-ratio: 5 / 4;
     overflow: hidden;
     border: 1px solid rgb(255 255 255 / 18%);
-    border-radius: 32px;
+    border-radius: var(--arave-radius-lg);
     box-shadow: 0 40px 80px -24px rgb(0 0 0 / 65%);
 
     @media (width <= 900px) {
@@ -353,28 +422,28 @@
     position: absolute;
     z-index: 3;
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
     padding: 8px 16px 8px 8px;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     line-height: 1.3;
     color: var(--arave-text-muted);
     background: rgb(255 255 255 / 94%);
-    border-radius: 18px;
+    border-radius: var(--arave-radius-md);
     box-shadow: 0 16px 32px -8px rgb(26 11 48 / 45%);
     backdrop-filter: blur(10px);
-    animation: float 6s ease-in-out 1.2s infinite;
+    animation: float 6s ease-in-out 1.2s 3; /* Flutua por alguns ciclos e para, sem competir com o CTA */
 
     strong {
       display: block;
-      font-size: 0.85rem;
+      font-size: 0.875rem;
       font-weight: 800;
       color: var(--arave-purple-dark);
     }
 
     &.chip-top {
-      top: 28px;
-      left: -28px;
+      top: 32px;
+      left: -32px;
     }
 
     &.chip-bottom {
@@ -383,26 +452,10 @@
       animation-delay: 2.5s;
     }
 
-    @media (width <= 1100px) {
-      &.chip-top { left: 16px; }
-      &.chip-bottom { right: 16px; }
-    }
-
-    @media (width <= 640px) {
-      padding: 6px 12px 6px 6px;
-      font-size: 0.7rem;
-
-      strong { font-size: 0.75rem; }
-
-      &.chip-top {
-        top: 12px;
-        left: 12px;
-      }
-
-      &.chip-bottom {
-        right: 12px;
-        bottom: 12px;
-      }
+    /* Abaixo de 1280px não sobra margem para os selos saírem da foto e eles passam a tampá-la;
+       os horários já aparecem em Atividades e na Agenda */
+    @media (width < 1280px) {
+      display: none;
     }
   }
 
@@ -415,21 +468,11 @@
     height: 36px;
     color: var(--arave-purple-dark);
     background: var(--arave-yellow-main);
-    border-radius: 12px;
+    border-radius: var(--arave-radius-sm);
 
     svg {
       width: 20px;
       height: 20px;
-    }
-
-    @media (width <= 640px) {
-      width: 30px;
-      height: 30px;
-
-      svg {
-        width: 16px;
-        height: 16px;
-      }
     }
   }
 
@@ -457,17 +500,17 @@
   position: relative;
   z-index: 10;
   display: flow-root; /* Evita que a margem negativa do card colapse com a seção */
-  padding: 0 20px var(--arave-section-space);
+  padding: 0 0 var(--arave-section-space); /* O respiro lateral vem só do .container */
   background-color: var(--arave-white);
 
-  /* Card flutuante que sobrepõe a base do hero */
+  /* Card flutuante que sobrepõe a base do hero; texto à esquerda porque o parágrafo tem várias linhas */
   .about-card {
     position: relative;
     max-width: 900px;
-    padding: clamp(36px, 6vw, 64px) clamp(24px, 6vw, 64px);
+    padding: clamp(32px, 6vw, 64px) clamp(24px, 6vw, 64px);
     margin: -96px auto 0;
     overflow: hidden;
-    text-align: center;
+    text-align: left;
     background:
       linear-gradient(var(--arave-white), var(--arave-white)) padding-box,
       linear-gradient(135deg, var(--arave-yellow-main), rgb(90 40 152 / 35%) 45%, rgb(63 27 108 / 8%)) border-box;
@@ -475,31 +518,56 @@
     border-radius: var(--arave-radius-lg);
     box-shadow: var(--arave-shadow-lg);
 
-    /* Barra de destaque no topo */
+    @media (width <= 640px) {
+      padding: 32px 20px;
+      margin-top: -72px;
+    }
+
+    @media (width <= 360px) {
+      padding: 24px 16px;
+    }
+
+    /* Barra de destaque no topo, alinhada ao início do texto */
     &::before {
       position: absolute;
       top: 0;
-      left: 50%;
+      left: clamp(24px, 6vw, 64px);
       width: 96px;
-      height: 5px;
+      height: 4px;
       content: '';
       background: linear-gradient(90deg, var(--arave-yellow-main), var(--arave-yellow-dark));
-      border-radius: 0 0 6px 6px;
-      transform: translateX(-50%);
+      border-radius: 0 0 4px 4px;
+
+      @media (width <= 640px) {
+        left: 20px;
+      }
+
+      @media (width <= 360px) {
+        left: 16px;
+      }
     }
 
     .section-title {
       margin-bottom: 20px;
       font-size: clamp(1.75rem, 3.5vw, 2.4rem);
+      text-align: left;
+
+      @media (width <= 640px) {
+        margin-bottom: 16px;
+      }
     }
 
     p {
-      max-width: 700px;
-      margin: 0 auto;
+      max-width: 62ch;
+      margin: 0;
       font-size: clamp(1rem, 1.5vw, 1.15rem);
-      line-height: 1.85;
+      line-height: 1.7;
       color: var(--arave-text-muted);
       text-wrap: pretty;
+
+      @media (width <= 640px) {
+        line-height: 1.65;
+      }
 
       strong {
         font-weight: 700;
@@ -518,18 +586,24 @@
     radial-gradient(ellipse 50% 40% at 0% 0%, rgb(90 40 152 / 8%) 0%, transparent 70%),
     radial-gradient(ellipse 40% 35% at 100% 100%, rgb(255 184 0 / 10%) 0%, transparent 70%);
 
+  /* Mesmo ritmo das outras seções: título → lead → conteúdo */
+  .section-title {
+    margin-bottom: 12px;
+  }
+
   .activities-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 24px;
-    margin-top: 56px;
 
-    @media (width <= 1024px) {
-      grid-template-columns: repeat(2, 1fr);
+    /* Abaixo de 1200px quatro colunas ficam estreitas demais para o texto e os horários */
+    @media (width < 1200px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     @media (width <= 640px) {
       grid-template-columns: 1fr;
+      gap: 16px;
     }
   }
 
@@ -564,11 +638,11 @@
 
     .card-badge {
       position: absolute;
-      top: 20px;
-      left: 20px;
+      top: 24px;
+      left: 24px;
       z-index: 3;
-      padding: 6px 14px;
-      font-size: 0.7rem;
+      padding: 6px 12px;
+      font-size: 0.75rem;
       font-weight: 700;
       color: var(--arave-white);
       text-transform: uppercase;
@@ -602,12 +676,14 @@
         position: absolute;
         inset: 0;
         content: '';
+
+        /* Escuro o bastante até a altura do título para manter o contraste em fotos claras */
         background: linear-gradient(
           to top,
           rgb(26 11 48 / 97%) 0%,
-          rgb(45 19 80 / 75%) 35%,
-          rgb(45 19 80 / 15%) 70%,
-          rgb(0 0 0 / 0%) 100%
+          rgb(26 11 48 / 88%) 45%,
+          rgb(45 19 80 / 45%) 75%,
+          rgb(45 19 80 / 10%) 100%
         );
       }
     }
@@ -624,10 +700,15 @@
       flex: 1;
       flex-direction: column;
       justify-content: flex-end;
-      padding: 76px 26px 32px; /* Topo reservado para o selo da categoria */
+      padding: 72px 24px 32px; /* Topo reservado para o selo da categoria; laterais alinhadas ao selo */
+
+      /* No celular reserva uma faixa da foto visível acima do texto */
+      @media (width <= 640px) {
+        padding-top: 144px;
+      }
 
       h3 {
-        margin: 0 0 10px;
+        margin: 0 0 8px;
         font-size: 1.5rem;
         font-weight: 800;
         line-height: 1.2;
@@ -651,11 +732,10 @@
         margin: 0;
         font-size: 0.95rem;
         line-height: 1.6;
-        color: rgb(232 223 245 / 80%);
-        transition: color 0.4s ease;
+        color: rgb(255 255 255 / 88%);
       }
 
-      /* Horários de treino (card de futsal) */
+      /* Horários de treino de cada modalidade */
       .card-schedule {
         display: flex;
         flex-direction: column;
@@ -676,7 +756,7 @@
         }
 
         .schedule-when {
-          font-size: 0.78rem;
+          font-size: 0.75rem;
           font-weight: 800;
           color: var(--arave-yellow-main);
           text-transform: uppercase;
@@ -684,30 +764,25 @@
         }
 
         .schedule-where {
-          font-size: 0.82rem;
+          font-size: 0.875rem;
           line-height: 1.4;
           color: rgb(255 255 255 / 90%);
         }
       }
     }
 
+    /* Feedback sutil: o card não é clicável, então não deve "pular" */
     @media (hover: hover) {
       &:hover {
         box-shadow: var(--arave-shadow-lg);
-        transform: translateY(-10px);
+        transform: translateY(-4px);
 
         .card-bg {
-          transform: scale(1.1);
+          transform: scale(1.04);
         }
 
-        .card-info {
-          h3::before {
-            width: 56px;
-          }
-
-          p {
-            color: rgb(255 255 255 / 92%);
-          }
+        .card-info h3::before {
+          width: 56px;
         }
       }
     }
@@ -741,19 +816,17 @@
     color: rgb(255 255 255 / 72%);
   }
 
+  /* Uma coluna por dia com aula (--days vem do TSX), sem colunas vazias nem dia órfão.
+     Abaixo de 1024px vira um dia por linha, com as aulas do dia lado a lado */
   .schedule-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 20px;
-    align-items: start;
+    grid-template-columns: repeat(var(--days, 3), minmax(0, 1fr));
+    gap: 24px;
+    align-items: stretch; /* Dias da mesma linha com a mesma altura */
 
     @media (width <= 1024px) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    @media (width <= 560px) {
       grid-template-columns: 1fr;
-      gap: 14px;
+      gap: 16px;
     }
   }
 
@@ -764,14 +837,11 @@
     border: 1px solid rgb(255 255 255 / 12%);
     border-radius: var(--arave-radius-lg);
     backdrop-filter: blur(10px);
-    transition:
-      border-color 0.3s ease,
-      transform 0.4s var(--arave-ease-out);
+    transition: border-color 0.3s ease;
 
     @media (hover: hover) {
       &:hover {
         border-color: rgb(255 255 255 / 28%);
-        transform: translateY(-4px);
       }
     }
 
@@ -787,8 +857,8 @@
     gap: 8px;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 14px;
-    margin-bottom: 14px;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
     border-bottom: 1px solid rgb(255 255 255 / 10%);
 
     h3 {
@@ -801,8 +871,8 @@
   }
 
   .today-badge {
-    padding: 4px 10px;
-    font-size: 0.68rem;
+    padding: 4px 12px;
+    font-size: 0.75rem;
     font-weight: 800;
     color: var(--arave-purple-dark);
     text-transform: uppercase;
@@ -812,12 +882,16 @@
   }
 
   .session-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: grid;
+    gap: 8px;
     padding: 0;
     margin: 0;
     list-style: none;
+
+    @media (641px <= width <= 1024px) {
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
   }
 
   /* Cada modalidade tem uma cor de destaque */
@@ -828,10 +902,10 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 14px 14px 14px 18px;
+    padding: 16px 16px 16px 20px;
     overflow: hidden;
     background: rgb(255 255 255 / 7%);
-    border-radius: 16px;
+    border-radius: var(--arave-radius-sm);
 
     &::before {
       position: absolute;
@@ -844,10 +918,11 @@
       border-radius: 0 4px 4px 0;
     }
 
-    &.session-futsal { --session-color: #b98cf5; }
+    /* Tons claros o bastante para 4.5:1 no texto de horário sobre o roxo */
+    &.session-futsal { --session-color: #c9a6ff; }
     &.session-campo { --session-color: #5fd38d; }
     &.session-funcional { --session-color: #ff9f5a; }
-    &.session-artes { --session-color: #ff7fb0; }
+    &.session-artes { --session-color: #ff9cc4; }
   }
 
   .session-time {
@@ -868,7 +943,7 @@
     display: flex;
     gap: 6px;
     align-items: flex-start;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     line-height: 1.4;
     color: rgb(255 255 255 / 75%);
 
@@ -882,7 +957,7 @@
 
   .session-group {
     align-self: flex-start;
-    padding: 3px 10px;
+    padding: 4px 12px;
     margin-top: 4px;
     font-size: 0.75rem;
     font-weight: 600;
@@ -904,8 +979,9 @@
     position: relative;
     display: flex;
     width: 100%;
+    max-width: 1600px; /* Em telas muito largas a faixa não precisa cobrir tudo */
     padding: 16px 0 24px;
-    margin-top: 40px;
+    margin: 8px auto 0; /* Título (24) + 8 + padding (16) = 48px, o mesmo ritmo das outras seções */
     overflow: hidden;
     mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
 
@@ -916,7 +992,8 @@
       will-change: transform;
       animation: marquee 32s linear infinite;
 
-      &:hover {
+      &:hover,
+      &.is-paused {
         animation-play-state: paused;
       }
     }
@@ -928,8 +1005,8 @@
       justify-content: center;
       width: clamp(15rem, 28vw, 21rem);
       aspect-ratio: 16 / 9;
-      padding: 0; /* Zerado para a imagem ocupar 100% da área útil do card */
-      margin-right: 28px;
+      padding: 24px 32px; /* Respiro para o logo inteiro caber sem corte */
+      margin-right: 24px;
       overflow: hidden;
       background:
         linear-gradient(135deg, var(--arave-bg-soft) 0%, var(--arave-white) 100%);
@@ -942,11 +1019,10 @@
         border-color 0.4s ease;
 
       img {
-        /* Força a imagem a ter exatamente o mesmo tamanho em todos os cards */
         display: block;
         width: 100%;
         height: 100%;
-        object-fit: cover; /* Ocupa todo o espaço do card */
+        object-fit: contain; /* Logos de qualquer proporção aparecem inteiros */
         object-position: center;
         transition:
           transform 0.5s var(--arave-ease-out),
@@ -956,7 +1032,7 @@
       span {
         font-size: 0.95rem;
         font-weight: 700;
-        color: rgb(92 82 107 / 70%);
+        color: var(--arave-text-muted);
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 1.5px;
@@ -974,6 +1050,39 @@
           }
         }
       }
+    }
+  }
+
+  .marquee-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    color: var(--arave-purple-main);
+    cursor: pointer;
+    background: var(--arave-white);
+    border: 1px solid rgb(63 27 108 / 16%);
+    border-radius: 50%;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    &:hover,
+    &:focus-visible {
+      background: var(--arave-purple-tint);
+      border-color: var(--arave-purple-light);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--arave-purple-light);
+      outline-offset: 2px;
     }
   }
 }
@@ -1005,14 +1114,26 @@
     @media (width <= 900px) {
       grid-template-columns: 1fr;
     }
+
+    /* No celular o mapa encosta nas bordas do card, sem paddings empilhados */
+    @media (width <= 640px) {
+      gap: 0;
+      padding: 0;
+      overflow: hidden;
+    }
   }
 
   .location-info {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 28px;
-    padding: clamp(16px, 3vw, 28px);
+    gap: 32px;
+    padding: clamp(16px, 3vw, 32px);
+
+    @media (width <= 640px) {
+      gap: 24px;
+      padding: 24px 20px;
+    }
   }
 
   .info-list {
@@ -1027,8 +1148,12 @@
     display: flex;
     gap: 16px;
     align-items: flex-start;
-    padding: 18px 0;
+    padding: 16px 0;
     border-bottom: 1px solid rgb(63 27 108 / 8%);
+
+    @media (width <= 640px) {
+      gap: 12px;
+    }
 
     &:first-child {
       padding-top: 0;
@@ -1049,7 +1174,12 @@
     height: 44px;
     color: var(--arave-purple-main);
     background: linear-gradient(135deg, var(--arave-purple-tint), rgb(255 184 0 / 18%));
-    border-radius: 14px;
+    border-radius: var(--arave-radius-sm);
+
+    @media (width <= 640px) {
+      width: 40px;
+      height: 40px;
+    }
 
     svg {
       width: 20px;
@@ -1065,9 +1195,9 @@
   }
 
   .info-label {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    color: var(--arave-yellow-dark);
+    color: var(--arave-purple-light); /* O amarelo sobre branco ficava em 2.2:1 */
     text-transform: uppercase;
     letter-spacing: 1.5px;
   }
@@ -1077,7 +1207,7 @@
     font-weight: 600;
     line-height: 1.55;
     color: var(--arave-text-dark);
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
 
     strong {
       font-weight: 700;
@@ -1094,6 +1224,12 @@
       color: var(--arave-purple-light);
       text-decoration: underline;
       text-underline-offset: 3px;
+    }
+
+    &:focus-visible {
+      border-radius: 4px;
+      outline: 2px solid var(--arave-purple-light);
+      outline-offset: 2px;
     }
   }
 
@@ -1116,10 +1252,14 @@
     min-height: 320px; /* No desktop acompanha a altura das informações */
     overflow: hidden;
     background: var(--arave-purple-tint);
-    border-radius: calc(var(--arave-radius-lg) - 8px);
+    border-radius: calc(var(--arave-radius-lg) - 12px); /* Raio concêntrico ao card (padding de 12px) */
 
     @media (width <= 900px) {
       min-height: 260px;
+    }
+
+    @media (width <= 640px) {
+      border-radius: 0;
     }
 
     iframe {
@@ -1133,7 +1273,7 @@
 /* --- FOOTER --- */
 .main-footer {
   position: relative;
-  padding: 88px 0 32px;
+  padding: var(--arave-section-space) 0 32px;
   overflow: hidden;
   color: var(--arave-white);
   background-color: var(--arave-purple-darker);
@@ -1159,19 +1299,20 @@
     gap: 48px;
     margin-bottom: 64px;
 
-    @media (width <= 992px) {
+    /* Abaixo de 1200px quatro colunas quebram os itens de Atividades em duas linhas */
+    @media (width < 1200px) {
       grid-template-columns: 1fr 1fr;
     }
 
-    @media (width <= 600px) {
+    @media (width <= 640px) {
       grid-template-columns: 1fr;
-      gap: 36px;
+      gap: 32px;
     }
   }
 
   .footer-col {
     h4 {
-      margin: 0 0 22px;
+      margin: 0 0 24px;
       font-size: 0.8rem;
       font-weight: 700;
       color: var(--arave-yellow-main);
@@ -1194,7 +1335,7 @@
         display: flex;
         flex-direction: column;
         gap: 2px;
-        padding: 12px 14px;
+        padding: 12px 16px;
         background-color: rgb(255 255 255 / 5%);
         border: 1px solid rgb(255 255 255 / 8%);
         border-radius: var(--arave-radius-sm);
@@ -1209,20 +1350,47 @@
       }
     }
 
-    .address-text,
-    .contact-text {
-      margin: 0 0 14px;
-      font-size: 0.95rem;
-      line-height: 1.7;
-      color: rgb(255 255 255 / 72%);
+    /* Endereço e contatos com ícone de linha, no lugar dos emojis */
+    .contact-list li {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      line-height: 1.6;
+
+      svg {
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        margin-top: 4px;
+        color: var(--arave-yellow-main);
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+        overflow-wrap: break-word;
+
+        &:hover,
+        &:focus-visible {
+          color: var(--arave-white);
+          text-decoration: underline;
+          text-underline-offset: 3px;
+        }
+
+        &:focus-visible {
+          border-radius: 4px;
+          outline: 2px solid var(--arave-yellow-main);
+          outline-offset: 2px;
+        }
+      }
     }
 
     &.brand-col {
       .footer-logo {
         display: flex;
-        gap: 14px;
+        gap: 12px;
         align-items: center;
-        margin-bottom: 18px;
+        margin-bottom: 16px;
 
         img {
           width: 48px;
@@ -1237,7 +1405,7 @@
         h3 {
           margin: 0;
           font-size: 1.6rem;
-          font-weight: 900;
+          font-weight: 800;
           color: var(--arave-white);
           letter-spacing: 0.12em;
         }
@@ -1245,7 +1413,7 @@
 
       .footer-desc {
         max-width: 320px;
-        margin: 0 0 28px;
+        margin: 0 0 24px;
         font-size: 0.95rem;
         line-height: 1.7;
         color: rgb(255 255 255 / 68%);
@@ -1266,7 +1434,7 @@
       color: var(--arave-white);
       background-color: rgb(255 255 255 / 6%);
       border: 1px solid rgb(255 255 255 / 14%);
-      border-radius: 14px;
+      border-radius: var(--arave-radius-sm);
       transition:
         color 0.3s ease,
         background-color 0.3s ease,
@@ -1301,22 +1469,24 @@
     gap: 8px 24px;
     align-items: center;
     justify-content: space-between;
-    padding-top: 28px;
+    padding-top: 24px;
     border-top: 1px solid rgb(255 255 255 / 10%);
 
-    @media (width <= 768px) {
+    /* Empilhado e à esquerda, no mesmo eixo das colunas acima, junto com a grade em 2 colunas */
+    @media (width < 1200px) {
       flex-direction: column;
-      text-align: center;
+      align-items: flex-start;
+      text-align: left;
     }
 
     p {
       margin: 0;
-      font-size: 0.85rem;
+      font-size: 0.875rem;
       color: rgb(255 255 255 / 60%);
 
       &.sub-text {
         font-size: 0.8rem;
-        color: rgb(255 255 255 / 40%);
+        color: rgb(255 255 255 / 55%);
       }
     }
   }
@@ -1358,19 +1528,14 @@
 
 @media (width <= 640px) {
   .container { padding: 0 20px; }
-  .about-section .about-card { margin-top: -72px; }
 
-  .activities-section .activities-grid {
-    gap: 16px;
-    margin-top: 40px;
-  }
-
+  /* Se quebrar em 2 linhas em telas de 360px, o raio menor evita a "cápsula gorda" */
   .section-subtitle {
-    max-width: 100%;
-    font-size: 0.68rem;
+    font-size: 0.75rem;
     text-align: center;
+    text-wrap: balance;
     letter-spacing: 1.5px;
-    white-space: nowrap;
+    border-radius: var(--arave-radius-sm);
   }
 }
 
