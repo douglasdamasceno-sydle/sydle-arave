@@ -322,6 +322,77 @@ textarea {
   }
 }
 
+/* --- TIPO (sugestão / reclamação) --- */
+.type-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.type-option {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 52px;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--arave-text-dark);
+  cursor: pointer;
+  background: var(--field-bg);
+  border: 1.5px solid var(--field-border);
+  border-radius: var(--arave-radius-sm);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+
+  input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  &:hover {
+    border-color: #cfc2e2;
+  }
+
+  &:focus-within {
+    border-color: var(--arave-purple-light);
+    box-shadow: 0 0 0 4px rgb(90 40 152 / 14%);
+  }
+
+  &.is-selected {
+    color: var(--arave-purple-main);
+    background: var(--arave-purple-tint);
+    border-color: var(--arave-purple-light);
+  }
+}
+
+.type-option-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--arave-purple-light);
+  background: var(--arave-white);
+  border-radius: 50%;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.has-error .type-option {
+  border-color: var(--field-error);
+}
+
 /* --- ANEXOS --- */
 .dropzone {
   position: relative;

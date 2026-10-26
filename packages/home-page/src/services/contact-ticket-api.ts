@@ -6,7 +6,21 @@ import { CustomAPI, DefaultRestService } from '@sydle/ui-api';
  * (script de referência em `home-page/sydle-one/abrirTicketSite.js`).
  */
 export const CONTACT_API_CLASS_ID = '6adfa759372cae5ca5840b26';
-export const CONTACT_API_METHOD = 'abrirTicketSite';
+
+/** Formulários que abrem ticket pelo site. */
+export type ContactKind = 'associate' | 'feedback';
+export type FeedbackType = 'suggestion' | 'complaint';
+
+/** Um método público por formulário: cada um abre o ticket na sua classificação. */
+export const CONTACT_API_METHODS: Record<ContactKind, string> = {
+  associate: 'abrirTicketSite',
+  feedback: 'abrirSugestaoSite',
+};
+
+export const FEEDBACK_TYPE_LABEL: Record<FeedbackType, string> = {
+  suggestion: 'Sugestão',
+  complaint: 'Reclamação',
+};
 
 /** Limites do formulário (o método no SYDLE ONE valida os mesmos valores). */
 export const CONTACT_LIMITS = {
@@ -30,6 +44,8 @@ export const CONTACT_LIMITS = {
 } as const;
 
 export interface ContactFormValues {
+  /** Só no formulário de sugestões e reclamações. */
+  type: FeedbackType | '';
   name: string;
   phone: string;
   email: string;
@@ -50,6 +66,7 @@ export interface EncodedFile {
 }
 
 export interface OpenTicketPayload {
+  type?: FeedbackType;
   name: string;
   phone: string;
   email: string;
@@ -105,23 +122,33 @@ export const validateFile = (file: File): string | undefined => {
   return undefined;
 };
 
-export const validateContactForm = (values: ContactFormValues): ContactFormErrors => {
+/**
+ * Em sugestões e reclamações a identificação é opcional (dá para enviar anônimo):
+ * nome, telefone e e-mail só são validados quando preenchidos.
+ */
+export const validateContactForm = (values: ContactFormValues, kind: ContactKind = 'associate'): ContactFormErrors => {
   const errors: ContactFormErrors = {};
   const { name, phone, email, subject, message, attachments } = CONTACT_LIMITS;
+  const identityRequired = kind === 'associate';
+
+  if (kind === 'feedback' && !values.type) errors.type = 'Escolha se é uma sugestão ou uma reclamação.';
 
   const nameValue = values.name.trim();
-  if (!nameValue) errors.name = 'Informe seu nome.';
-  else if (nameValue.length < name.min) errors.name = `Use pelo menos ${name.min} caracteres.`;
+  if (!nameValue) {
+    if (identityRequired) errors.name = 'Informe seu nome.';
+  } else if (identityRequired && nameValue.length < name.min) errors.name = `Use pelo menos ${name.min} caracteres.`;
   else if (nameValue.length > name.max) errors.name = `Use no máximo ${name.max} caracteres.`;
 
   const phoneDigits = onlyDigits(values.phone);
-  if (!phoneDigits) errors.phone = 'Informe um telefone para contato.';
-  else if (phoneDigits.length < phone.minDigits || phoneDigits.length > phone.maxDigits)
+  if (!phoneDigits) {
+    if (identityRequired) errors.phone = 'Informe um telefone para contato.';
+  } else if (phoneDigits.length < phone.minDigits || phoneDigits.length > phone.maxDigits)
     errors.phone = 'Informe o DDD e o número, ex.: (31) 99999-9999.';
 
   const emailValue = values.email.trim();
-  if (!emailValue) errors.email = 'Informe seu e-mail.';
-  else if (emailValue.length > email.max) errors.email = `Use no máximo ${email.max} caracteres.`;
+  if (!emailValue) {
+    if (identityRequired) errors.email = 'Informe seu e-mail.';
+  } else if (emailValue.length > email.max) errors.email = `Use no máximo ${email.max} caracteres.`;
   else if (!EMAIL_PATTERN.test(emailValue)) errors.email = 'Informe um e-mail válido.';
 
   const subjectValue = values.subject.trim();
@@ -196,11 +223,11 @@ export const encodeAttachment = (file: File): Promise<EncodedFile> =>
   });
 
 /** Chama o método público que abre o ticket no SYDLE ONE. */
-export const openTicket = async (payload: OpenTicketPayload): Promise<OpenTicketResult> => {
+export const openTicket = async (payload: OpenTicketPayload, kind: ContactKind = 'associate'): Promise<OpenTicketResult> => {
   ensureConfigured();
 
   const api = new CustomAPI(CONTACT_API_CLASS_ID, getRestService());
-  const response = await api.fetch<OpenTicketPayload, OpenTicketResult>(CONTACT_API_METHOD, payload, {
+  const response = await api.fetch<OpenTicketPayload, OpenTicketResult>(CONTACT_API_METHODS[kind], payload, {
     forcePost: true,
     requestParams: { public: true },
   });
@@ -220,9 +247,10 @@ export const openTicket = async (payload: OpenTicketPayload): Promise<OpenTicket
  */
 export const submitContactTicket = async (
   values: ContactFormValues,
+  kind: ContactKind = 'associate',
   onProgress?: (percent: number) => void
 ): Promise<OpenTicketResult> => {
-  const errors = validateContactForm(values);
+  const errors = validateContactForm(values, kind);
   if (Object.keys(errors).length) throw new ContactApiError('Revise os campos destacados.');
 
   const encoded: EncodedFile[] = [];
@@ -232,12 +260,16 @@ export const submitContactTicket = async (
   }
   onProgress?.(100);
 
-  return openTicket({
-    name: values.name.trim(),
-    phone: onlyDigits(values.phone),
-    email: values.email.trim().toLowerCase(),
-    subject: values.subject.trim(),
-    message: values.message.trim(),
-    attachments: encoded,
-  });
+  return openTicket(
+    {
+      ...(kind === 'feedback' && values.type ? { type: values.type } : {}),
+      name: values.name.trim(),
+      phone: onlyDigits(values.phone),
+      email: values.email.trim().toLowerCase(),
+      subject: values.subject.trim(),
+      message: values.message.trim(),
+      attachments: encoded,
+    },
+    kind
+  );
 };

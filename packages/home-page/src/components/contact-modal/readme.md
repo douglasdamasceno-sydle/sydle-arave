@@ -7,10 +7,11 @@
 
 ## Properties
 
-| Property         | Attribute         | Description                              | Type      | Default |
-| ---------------- | ----------------- | ---------------------------------------- | --------- | ------- |
-| `defaultSubject` | `default-subject` | Assunto pré-preenchido ao abrir o modal. | `string`  | `''`    |
-| `open`           | `open`            | Controla a abertura do modal.            | `boolean` | `false` |
+| Property         | Attribute         | Description                                                        | Type                        | Default       |
+| ---------------- | ----------------- | ------------------------------------------------------------------ | --------------------------- | ------------- |
+| `defaultSubject` | `default-subject` | Assunto pré-preenchido ao abrir o modal.                           | `string`                    | `''`          |
+| `kind`           | `kind`            | Qual formulário exibir: "Associe-se" ou "Sugestões e reclamações". | `"associate" \| "feedback"` | `'associate'` |
+| `open`           | `open`            | Controla a abertura do modal.                                      | `boolean`                   | `false`       |
 
 
 ## Events

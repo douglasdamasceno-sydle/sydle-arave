@@ -5,6 +5,8 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
+import { ContactKind } from "./services/contact-ticket-api";
+export { ContactKind } from "./services/contact-ticket-api";
 export namespace Components {
     interface SyLibContactModal {
         /**
@@ -12,6 +14,11 @@ export namespace Components {
           * @default ''
          */
         "defaultSubject": string;
+        /**
+          * Qual formulário exibir: "Associe-se" ou "Sugestões e reclamações".
+          * @default 'associate'
+         */
+        "kind": ContactKind;
         /**
           * Controla a abertura do modal.
           * @default false
@@ -71,6 +78,11 @@ declare namespace LocalJSX {
          */
         "defaultSubject"?: string;
         /**
+          * Qual formulário exibir: "Associe-se" ou "Sugestões e reclamações".
+          * @default 'associate'
+         */
+        "kind"?: ContactKind;
+        /**
           * Disparado quando o usuário fecha o modal (botão, Esc ou clique fora).
          */
         "onSyLibContactModalClose"?: (event: SyLibContactModalCustomEvent<void>) => void;
@@ -88,6 +100,7 @@ declare namespace LocalJSX {
     interface SyLibContactModalAttributes {
         "open": boolean;
         "defaultSubject": string;
+        "kind": ContactKind;
     }
 
     interface IntrinsicElements {

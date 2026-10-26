@@ -5,11 +5,14 @@ import type {
   ContactFormErrors,
   ContactFormField,
   ContactFormValues,
+  ContactKind,
+  FeedbackType,
   OpenTicketResult,
 } from '../../services/contact-ticket-api';
 import {
   CONTACT_LIMITS,
   ContactApiError,
+  FEEDBACK_TYPE_LABEL,
   formatFileSize,
   formatPhone,
   submitContactTicket,
@@ -19,7 +22,43 @@ import {
 
 type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error';
 
+/** Textos que mudam entre os formulários; o layout e o comportamento são os mesmos. */
+const COPY: Record<
+  ContactKind,
+  {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    subjectPlaceholder: string;
+    messagePlaceholder: string;
+    successTitle: string;
+    successText: string;
+  }
+> = {
+  associate: {
+    eyebrow: 'Associe-se',
+    title: 'Fale com a ARAVE',
+    intro: 'Preencha seus dados e nossa equipe entrará em contato.',
+    subjectPlaceholder: 'Sobre o que você quer falar?',
+    messagePlaceholder: 'Conte um pouco sobre você e o que procura na ARAVE.',
+    successTitle: 'Mensagem enviada!',
+    successText: 'Recebemos seu contato e nossa equipe vai responder pelo telefone ou e-mail informado.',
+  },
+  feedback: {
+    eyebrow: 'Ouvidoria',
+    title: 'Sugestões e reclamações',
+    intro: 'Sua opinião ajuda a ARAVE a melhorar. Se preferir, envie sem se identificar.',
+    subjectPlaceholder: 'Resuma em poucas palavras',
+    messagePlaceholder: 'Conte o que aconteceu ou o que podemos melhorar. Datas e locais ajudam.',
+    successTitle: 'Recebemos sua mensagem!',
+    successText: 'Obrigado por nos ajudar a melhorar. Guarde o protocolo para acompanhar o atendimento.',
+  },
+};
+
+const FEEDBACK_TYPES = Object.keys(FEEDBACK_TYPE_LABEL) as FeedbackType[];
+
 const emptyValues = (subject = ''): ContactFormValues => ({
+  type: '',
   name: '',
   phone: '',
   email: '',
@@ -43,6 +82,9 @@ export class ContactModal {
 
   /** Assunto pré-preenchido ao abrir o modal. */
   @Prop() defaultSubject = '';
+
+  /** Qual formulário exibir: "Associe-se" ou "Sugestões e reclamações". */
+  @Prop() kind: ContactKind = 'associate';
 
   @State() values: ContactFormValues = emptyValues();
   @State() errors: ContactFormErrors = {};
@@ -112,14 +154,24 @@ export class ContactModal {
     if (event.target === this.dialogEl) this.requestClose();
   };
 
-  private setValue(field: Exclude<ContactFormField, 'attachments'>, raw: string) {
+  private get isFeedback() {
+    return this.kind === 'feedback';
+  }
+
+  private setType(type: FeedbackType) {
+    this.values = { ...this.values, type };
+    this.touched = { ...this.touched, type: true };
+    this.errors = { ...this.errors, type: undefined };
+  }
+
+  private setValue(field: Exclude<ContactFormField, 'attachments' | 'type'>, raw: string) {
     const value = field === 'phone' ? formatPhone(raw) : raw;
     this.values = { ...this.values, [field]: value };
     if (this.touched[field]) this.revalidate(field);
   }
 
   private revalidate(field: ContactFormField) {
-    const fieldError = validateContactForm(this.values)[field];
+    const fieldError = validateContactForm(this.values, this.kind)[field];
     this.errors = { ...this.errors, [field]: fieldError };
   }
 
@@ -165,13 +217,22 @@ export class ContactModal {
     event.preventDefault();
     if (this.status === 'submitting') return;
 
-    const errors = validateContactForm(this.values);
+    const errors = validateContactForm(this.values, this.kind);
     this.errors = errors;
-    this.touched = { name: true, phone: true, email: true, subject: true, message: true, attachments: true };
+    this.touched = {
+      type: true,
+      name: true,
+      phone: true,
+      email: true,
+      subject: true,
+      message: true,
+      attachments: true,
+    };
 
     if (Object.keys(errors).length) {
       const firstInvalid = this.dialogEl?.querySelector<HTMLElement>('[aria-invalid="true"]');
-      firstInvalid?.focus();
+      // O grupo de rádios não recebe foco: vai para a primeira opção.
+      (firstInvalid?.querySelector<HTMLElement>('input') ?? firstInvalid)?.focus();
       return;
     }
 
@@ -186,7 +247,11 @@ export class ContactModal {
     this.uploadProgress = 0;
 
     try {
-      this.result = await submitContactTicket(this.values, (percent) => (this.uploadProgress = Math.round(percent)));
+      this.result = await submitContactTicket(
+        this.values,
+        this.kind,
+        (percent) => (this.uploadProgress = Math.round(percent))
+      );
       this.status = 'success';
     } catch (error) {
       this.status = 'error';
@@ -221,13 +286,13 @@ export class ContactModal {
   private renderTextField(
     field: 'name' | 'email' | 'subject',
     label: string,
-    props: { type?: string; autocomplete?: string; placeholder?: string }
+    props: { type?: string; autocomplete?: string; placeholder?: string; optional?: boolean }
   ) {
     return (
       <div class={{ field: true, 'has-error': Boolean(this.touched[field] && this.errors[field]) }}>
         <div class="field-label-row">
           <label htmlFor={field}>
-            {label} <span class="required">*</span>
+            {label} {this.renderRequirement(props.optional)}
           </label>
           {this.renderCounter(field)}
         </div>
@@ -238,7 +303,7 @@ export class ContactModal {
           autocomplete={props.autocomplete}
           placeholder={props.placeholder}
           maxLength={CONTACT_LIMITS[field].max}
-          required
+          required={!props.optional}
           value={this.values[field]}
           onInput={(event) => this.setValue(field, (event.target as HTMLInputElement).value)}
           onBlur={() => this.markTouched(field)}
@@ -249,21 +314,95 @@ export class ContactModal {
     );
   }
 
+  private renderRequirement(optional = false) {
+    return optional ? <span class="optional">(opcional)</span> : <span class="required">*</span>;
+  }
+
+  /** Sugestão ou reclamação: grupo de rádios com cara de botões segmentados. */
+  private renderTypeField() {
+    const invalid = Boolean(this.touched.type && this.errors.type);
+    return (
+      <div class={{ field: true, 'has-error': invalid }}>
+        <div class="field-label-row">
+          <span class="label" id="type-label">
+            O que você quer enviar? <span class="required">*</span>
+          </span>
+        </div>
+        <div
+          class="type-options"
+          role="radiogroup"
+          aria-labelledby="type-label"
+          aria-invalid={invalid ? 'true' : 'false'}
+          aria-describedby={invalid ? 'type-error' : undefined}
+        >
+          {FEEDBACK_TYPES.map((type) => (
+            <label key={type} class={{ 'type-option': true, 'is-selected': this.values.type === type }}>
+              <input
+                type="radio"
+                name="type"
+                value={type}
+                checked={this.values.type === type}
+                onChange={() => this.setType(type)}
+              />
+              <span class="type-option-icon" aria-hidden="true">
+                {type === 'suggestion' ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M9 18h6M10 22h4"></path>
+                    <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"></path>
+                  </svg>
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 9v4M12 17h.01"></path>
+                    <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path>
+                  </svg>
+                )}
+              </span>
+              {FEEDBACK_TYPE_LABEL[type]}
+            </label>
+          ))}
+        </div>
+        {this.renderError('type')}
+      </div>
+    );
+  }
+
   private renderForm() {
     const submitting = this.status === 'submitting';
+    const optional = this.isFeedback;
+    const copy = COPY[this.kind];
     const { attachments } = this.values;
     const { maxFiles, maxFileSize, accept } = CONTACT_LIMITS.attachments;
 
     return (
       <form class="contact-form" noValidate onSubmit={this.handleSubmit}>
         <fieldset disabled={submitting}>
-          {this.renderTextField('name', 'Nome', { autocomplete: 'name', placeholder: 'Seu nome completo' })}
+          {this.isFeedback && this.renderTypeField()}
+
+          {this.renderTextField('name', 'Nome', {
+            autocomplete: 'name',
+            placeholder: optional ? 'Deixe em branco para enviar anônimo' : 'Seu nome completo',
+            optional,
+          })}
 
           <div class="field-row">
             <div class={{ field: true, 'has-error': Boolean(this.touched.phone && this.errors.phone) }}>
               <div class="field-label-row">
                 <label htmlFor="phone">
-                  Telefone para contato <span class="required">*</span>
+                  Telefone para contato {this.renderRequirement(optional)}
                 </label>
               </div>
               <input
@@ -274,7 +413,7 @@ export class ContactModal {
                 autocomplete="tel-national"
                 placeholder="(31) 99999-9999"
                 maxLength={15}
-                required
+                required={!optional}
                 value={this.values.phone}
                 onInput={(event) => {
                   const input = event.target as HTMLInputElement;
@@ -291,10 +430,11 @@ export class ContactModal {
               type: 'email',
               autocomplete: 'email',
               placeholder: 'voce@exemplo.com',
+              optional,
             })}
           </div>
 
-          {this.renderTextField('subject', 'Assunto', { placeholder: 'Sobre o que você quer falar?' })}
+          {this.renderTextField('subject', 'Assunto', { placeholder: copy.subjectPlaceholder })}
 
           <div class={{ field: true, 'has-error': Boolean(this.touched.message && this.errors.message) }}>
             <div class="field-label-row">
@@ -307,7 +447,7 @@ export class ContactModal {
               id="message"
               name="message"
               rows={5}
-              placeholder="Conte um pouco sobre você e o que procura na ARAVE."
+              placeholder={copy.messagePlaceholder}
               maxLength={CONTACT_LIMITS.message.max}
               required
               value={this.values.message}
@@ -441,6 +581,7 @@ export class ContactModal {
 
   private renderSuccess() {
     const protocol = this.result.searchCode ?? this.result.code;
+    const copy = COPY[this.kind];
     return (
       <div class="success-view" role="status">
         <span class="success-icon" aria-hidden="true">
@@ -455,8 +596,8 @@ export class ContactModal {
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
         </span>
-        <h3>Mensagem enviada!</h3>
-        <p>Recebemos seu contato e nossa equipe vai responder pelo telefone ou e-mail informado.</p>
+        <h3>{copy.successTitle}</h3>
+        <p>{copy.successText}</p>
         {protocol && (
           <p class="protocol">
             Protocolo: <strong>{protocol}</strong>
@@ -470,6 +611,7 @@ export class ContactModal {
   }
 
   render() {
+    const copy = COPY[this.kind];
     return (
       <Host>
         <dialog
@@ -482,9 +624,9 @@ export class ContactModal {
           <div class="dialog-card">
             <header class="dialog-header">
               <div>
-                <span class="dialog-eyebrow">Associe-se</span>
-                <h2 id="contact-title">Fale com a ARAVE</h2>
-                <p>Preencha seus dados e nossa equipe entrará em contato.</p>
+                <span class="dialog-eyebrow">{copy.eyebrow}</span>
+                <h2 id="contact-title">{copy.title}</h2>
+                <p>{copy.intro}</p>
               </div>
               <button
                 type="button"

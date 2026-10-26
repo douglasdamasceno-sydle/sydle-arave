@@ -103,6 +103,7 @@ const SPONSOR_LOOP = Array.from({ length: Math.ceil(SPONSOR_MIN_LOOP / SPONSORS.
 })
 export class Home {
   @State() contactOpen = false;
+  @State() feedbackOpen = false;
   @State() sponsorsPaused = false;
 
   private activitiesEl?: HTMLElement;
@@ -117,6 +118,8 @@ export class Home {
     this.eventsEl?.querySelector<HTMLElement>('.section-title')?.focus({ preventScroll: true });
   };
   private closeContact = () => (this.contactOpen = false);
+  private openFeedback = () => (this.feedbackOpen = true);
+  private closeFeedback = () => (this.feedbackOpen = false);
   private toggleSponsors = () => (this.sponsorsPaused = !this.sponsorsPaused);
 
   private renderSchedule = (activity: Activity) => (
@@ -562,6 +565,12 @@ export class Home {
                       {renderIcon('phone')}
                       <a href={`tel:${CONTACT_PHONE_TEL}`}>{CONTACT_PHONE_DISPLAY}</a>
                     </li>
+                    <li>
+                      {renderIcon('chat')}
+                      <button type="button" class="footer-link" onClick={this.openFeedback}>
+                        Sugestões e reclamações
+                      </button>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -578,6 +587,23 @@ export class Home {
           open={this.contactOpen}
           defaultSubject="Quero me associar à ARAVE"
           onSyLibContactModalClose={this.closeContact}
+        ></sy-lib-contact-modal>
+
+        {/* Atalho fixo para a ouvidoria, visível em toda a página */}
+        <button
+          type="button"
+          class={{ 'feedback-fab': true, 'is-hidden': this.contactOpen || this.feedbackOpen }}
+          aria-label="Sugestões e reclamações"
+          onClick={this.openFeedback}
+        >
+          {renderIcon('chat')}
+          <span class="feedback-fab-label">Sugestões e reclamações</span>
+        </button>
+
+        <sy-lib-contact-modal
+          kind="feedback"
+          open={this.feedbackOpen}
+          onSyLibContactModalClose={this.closeFeedback}
         ></sy-lib-contact-modal>
       </Host>
     );

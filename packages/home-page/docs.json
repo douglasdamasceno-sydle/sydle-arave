@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-26T19:24:33",
+  "timestamp": "2026-10-26T19:42:51",
   "compiler": {
     "name": "@stencil/core",
     "version": "4.44.0",
@@ -36,6 +36,47 @@
           "default": "''",
           "values": [
             {
+              "type": "string"
+            }
+          ],
+          "optional": false,
+          "required": false,
+          "getter": false,
+          "setter": false
+        },
+        {
+          "name": "kind",
+          "type": "\"associate\" | \"feedback\"",
+          "complexType": {
+            "original": "ContactKind",
+            "resolved": "\"associate\" | \"feedback\"",
+            "references": {
+              "ContactKind": {
+                "location": "import",
+                "path": "../../services/contact-ticket-api",
+                "id": "src/services/contact-ticket-api.ts::ContactKind",
+                "referenceLocation": "ContactKind"
+              }
+            }
+          },
+          "mutable": false,
+          "attr": "kind",
+          "reflectToAttr": false,
+          "docs": "Qual formulário exibir: \"Associe-se\" ou \"Sugestões e reclamações\".",
+          "docsTags": [
+            {
+              "name": "default",
+              "text": "'associate'"
+            }
+          ],
+          "default": "'associate'",
+          "values": [
+            {
+              "value": "associate",
+              "type": "string"
+            },
+            {
+              "value": "feedback",
               "type": "string"
             }
           ],
@@ -161,5 +202,11 @@
       }
     }
   ],
-  "typeLibrary": {}
+  "typeLibrary": {
+    "src/services/contact-ticket-api.ts::ContactKind": {
+      "declaration": "export type ContactKind = 'associate' | 'feedback';",
+      "docstring": "",
+      "path": "src/services/contact-ticket-api.ts"
+    }
+  }
 }
