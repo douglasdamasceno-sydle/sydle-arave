@@ -1,30 +1,22 @@
 /**
- * Método público `abrirTicketSite` — recebe o formulário "Associe-se" da landing page
- * e abre um ticket no Service Desk do SYDLE ONE.
+ * Método público `abrirTicketSite` da classe "Contato do site" (ContatoSite.abrirTicketSite).
+ * Recebe o formulário "Associe-se / Fale com a ARAVE" da landing page e abre um ticket
+ * no Service Desk do SYDLE ONE, guardando nome, telefone e e-mail em `additionalData`.
  *
- * Onde colar: em uma classe sua (ex.: "Contato do site"), criando um método
- * com o identificador `abrirTicketSite`, acesso público (anônimo) e este script.
- * O _id dessa classe vai em `CONTACT_API_CLASS_ID`
- * (packages/home-page/src/services/contact-ticket-api.ts).
- *
- * A mesma classe precisa permitir `_upload` anônimo, porque o site envia os anexos
- * para `/_classId/<id da classe>/_upload` antes de chamar este método.
+ * Os anexos chegam em base64 na própria chamada (o `_upload` do SYDLE ONE exige login,
+ * e esta chamada é anônima); aqui eles viram arquivos com `_util._fileHelper.create`.
  *
  * Entrada (_input):
- *   { name, phone, email, subject, message, attachments: [{ _id, name, contentType, length, hash }] }
+ *   { name, phone, email, subject, message, attachments: [{ name, contentType, length, base64 }] }
  * Saída:
  *   { code, searchCode }
  */
 
 /* ===== Configuração (ids da instância arave-partner) ===== */
 
-// Classificação do ticket. Crie uma "Associe-se / Contato pelo site" com o
-// solicitante (requester) oculto na criação e sem dados adicionais obrigatórios.
-const CLASSIFICACAO_ID = '<_id da classificação>';
-const CLASSIFICACAO_CLASS_ID = '5d4467ab62d96562758f41a6'; // Classificação do ticket
-
-// Canal "Externo" (já existe).
-const CANAL = { _id: '5ee8dd02f36a6f664f57c84e', _classId: '5d4af15162d965627534572b' };
+const CLASSIFICACAO = { _id: '6adfa569372cae5ca521cc51', _classId: '5d4467ab62d96562758f41a6' };
+const DADOS_ADICIONAIS_CLASS = { _id: '6adfa53cd3acc30adf3a1e5e', _classId: '000000000000000000000000' };
+const CANAL = { _id: '5ee8dd02f36a6f664f57c84e', _classId: '5d4af15162d965627534572b' }; // Externo
 
 /* ===== Limites (iguais aos do site; nunca confie só no front) ===== */
 
@@ -78,9 +70,13 @@ if (telefone.length < LIMITES.phoneDigits.min || telefone.length > LIMITES.phone
 const anexos = Array.isArray(entrada.attachments) ? entrada.attachments : [];
 if (anexos.length > LIMITES.anexos.maxArquivos) falhar(`Envie no máximo ${LIMITES.anexos.maxArquivos} arquivos.`);
 anexos.forEach(arquivo => {
-  if (!arquivo || !arquivo._id) falhar('Anexo inválido.');
-  if (arquivo.length > LIMITES.anexos.maxBytes) falhar(`O arquivo "${arquivo.name}" passa de 5 MB.`);
-  if (arquivo.contentType && TIPOS_ACEITOS.indexOf(arquivo.contentType) === -1) {
+  if (!arquivo || typeof arquivo.base64 !== 'string' || !arquivo.base64 || typeof arquivo.name !== 'string') {
+    falhar('Anexo inválido.');
+  }
+  // Tamanho real a partir do base64, sem confiar no `length` informado.
+  const bytes = Math.floor((arquivo.base64.length * 3) / 4);
+  if (bytes > LIMITES.anexos.maxBytes) falhar(`O arquivo "${arquivo.name}" passa de 5 MB.`);
+  if (TIPOS_ACEITOS.indexOf(arquivo.contentType) === -1) {
     falhar(`O arquivo "${arquivo.name}" não é um formato aceito.`);
   }
 });
@@ -92,33 +88,30 @@ const telefoneFormatado =
     ? `(${telefone.slice(0, 2)}) ${telefone.slice(2, 7)}-${telefone.slice(7)}`
     : `(${telefone.slice(0, 2)}) ${telefone.slice(2, 6)}-${telefone.slice(6)}`;
 
-const descricao = [
-  `<p><strong>Nome:</strong> ${escaparHtml(nome)}</p>`,
-  `<p><strong>Telefone:</strong> ${telefoneFormatado}</p>`,
-  `<p><strong>E-mail:</strong> ${escaparHtml(email)}</p>`,
-  '<hr>',
-  `<p>${escaparHtml(mensagem).replace(/\n/g, '<br>')}</p>`,
-].join('');
-
 const novoTicket = {
   title: assunto,
-  description: descricao,
-  classification: { _id: CLASSIFICACAO_ID, _classId: CLASSIFICACAO_CLASS_ID },
+  description: `<p>${escaparHtml(mensagem).replace(/\n/g, '<br>')}</p>`,
+  classification: CLASSIFICACAO,
   channel: CANAL,
-  attachments: anexos.map(arquivo => ({
-    _id: arquivo._id,
-    name: arquivo.name,
-    contentType: arquivo.contentType,
-    length: arquivo.length,
-    hash: arquivo.hash,
-  })),
+  additionalData: {
+    _class: DADOS_ADICIONAIS_CLASS,
+    name: nome,
+    phone: telefoneFormatado,
+    email: email,
+  },
+  attachments: anexos.map(arquivo =>
+    _util._fileHelper.create({
+      base64: arquivo.base64,
+      targetFileName: arquivo.name.replace(/[\\/]/g, '_').slice(0, 150),
+      targetContentType: arquivo.contentType,
+    }),
+  ),
 };
 
-// Cria o ticket na classe "Ticket" (5d446dfc62d9656275a47d69) do pacote
-// "Service Desk - Atendimento". Ajuste o identificador do pacote se for diferente.
-const ticket = serviceDesk.ticket._create(novoTicket);
+// Classe "Ticket" do pacote "Service Desk - Atendimento" (com.sydle.servicedesk.itsm).
+const ticket = com.sydle.servicedesk.itsm.ticket._create(novoTicket);
 
-return {
+_output = {
   code: ticket.code,
   searchCode: ticket.searchCode,
 };

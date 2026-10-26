@@ -2,10 +2,10 @@ import { CustomAPI, DefaultRestService } from '@sydle/ui-api';
 
 /**
  * Configuração da API no SYDLE ONE.
- * Preencha com o _id da classe que contém o método público de abertura de ticket
+ * _id da classe que contém o método público de abertura de ticket
  * (script de referência em `home-page/sydle-one/abrirTicketSite.js`).
  */
-export const CONTACT_API_CLASS_ID = '';
+export const CONTACT_API_CLASS_ID = '6adfa759372cae5ca5840b26';
 export const CONTACT_API_METHOD = 'abrirTicketSite';
 
 /** Limites do formulário (o método no SYDLE ONE valida os mesmos valores). */
@@ -41,12 +41,12 @@ export interface ContactFormValues {
 export type ContactFormField = keyof ContactFormValues;
 export type ContactFormErrors = Partial<Record<ContactFormField, string>>;
 
-export interface UploadedFile {
-  _id: string;
+/** Anexo enviado dentro da própria chamada: o `_upload` do SYDLE ONE exige login. */
+export interface EncodedFile {
   name: string;
   contentType: string;
   length: number;
-  hash?: string;
+  base64: string;
 }
 
 export interface OpenTicketPayload {
@@ -55,7 +55,7 @@ export interface OpenTicketPayload {
   email: string;
   subject: string;
   message: string;
-  attachments: UploadedFile[];
+  attachments: EncodedFile[];
 }
 
 export interface OpenTicketResult {
@@ -153,46 +153,47 @@ const ensureConfigured = () => {
   }
 };
 
+/** Remove o prefixo "Error: " e a pilha ("\n\tat ...") que o SYDLE ONE anexa ao `throw` do script. */
+const cleanServerMessage = (text: string) => text.split('\n')[0].replace(/^Error:\s*/, '').trim() || undefined;
+
 const extractErrorMessage = (data: unknown): string | undefined => {
-  if (!data || typeof data !== 'object') return typeof data === 'string' ? data : undefined;
+  if (!data || typeof data !== 'object') return typeof data === 'string' ? cleanServerMessage(data) : undefined;
   const record = data as Record<string, unknown>;
-  if (typeof record.message === 'string') return record.message;
-  if (Array.isArray(record.errors) && record.errors.length) return extractErrorMessage(record.errors[0]);
+  if (typeof record.text === 'string') return cleanServerMessage(record.text);
+  if (typeof record.message === 'string') return cleanServerMessage(record.message);
+  for (const key of ['generalMessages', '_messages', 'errors']) {
+    const list = record[key];
+    if (Array.isArray(list) && list.length) return extractErrorMessage(list[0]);
+  }
   return undefined;
 };
 
-/** Envia um arquivo para o SYDLE ONE e devolve os metadados usados no campo de anexos. */
-export const uploadAttachment = (file: File, onProgress?: (loaded: number) => void): Promise<UploadedFile> => {
-  ensureConfigured();
-
-  return new Promise((resolve, reject) => {
-    // buildXHR é o caminho da ui-api para multipart: não força Content-Type JSON.
-    const xhr = getRestService().buildXHR({ url: `_classId/${CONTACT_API_CLASS_ID}/_upload`, public: true });
-    const fail = () => reject(new ContactApiError(`Não foi possível enviar o arquivo "${file.name}".`, xhr.status));
-
-    xhr.upload.onprogress = (event) => onProgress?.(event.loaded);
-    xhr.onerror = fail;
-    xhr.ontimeout = fail;
-    xhr.onload = () => {
-      const response = Array.isArray(xhr.response) ? xhr.response[0] : xhr.response;
-      if (xhr.status >= 200 && xhr.status < 300 && response?._id) {
-        resolve({
-          _id: response._id,
-          name: response.name ?? file.name,
-          contentType: response.contentType ?? file.type,
-          length: response.length ?? file.size,
-          hash: response.hash,
-        });
-      } else {
-        fail();
-      }
-    };
-
-    const form = new FormData();
-    form.append('file', file, file.name);
-    xhr.send(form);
-  });
+const MIME_BY_EXTENSION: Record<string, string> = {
+  pdf: 'application/pdf',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
+
+/** Lê o arquivo e devolve o conteúdo em base64 (sem o prefixo `data:`). */
+export const encodeAttachment = (file: File): Promise<EncodedFile> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new ContactApiError(`Não foi possível ler o arquivo "${file.name}".`));
+    reader.onload = () => {
+      const result = String(reader.result ?? '');
+      const extension = (file.name.split('.').pop() ?? '').toLowerCase();
+      resolve({
+        name: file.name,
+        contentType: file.type || MIME_BY_EXTENSION[extension] || 'application/octet-stream',
+        length: file.size,
+        base64: result.slice(result.indexOf(',') + 1),
+      });
+    };
+    reader.readAsDataURL(file);
+  });
 
 /** Chama o método público que abre o ticket no SYDLE ONE. */
 export const openTicket = async (payload: OpenTicketPayload): Promise<OpenTicketResult> => {
@@ -214,8 +215,8 @@ export const openTicket = async (payload: OpenTicketPayload): Promise<OpenTicket
 };
 
 /**
- * Fluxo completo: valida, envia os anexos (um por vez) e abre o ticket.
- * `onProgress` recebe a porcentagem total do envio dos anexos (0-100).
+ * Fluxo completo: valida, lê os anexos (um por vez) e abre o ticket.
+ * `onProgress` recebe a porcentagem da leitura dos anexos (0-100).
  */
 export const submitContactTicket = async (
   values: ContactFormValues,
@@ -224,13 +225,10 @@ export const submitContactTicket = async (
   const errors = validateContactForm(values);
   if (Object.keys(errors).length) throw new ContactApiError('Revise os campos destacados.');
 
-  const totalBytes = values.attachments.reduce((sum, file) => sum + file.size, 0) || 1;
-  let sentBytes = 0;
-  const uploaded: UploadedFile[] = [];
-
+  const encoded: EncodedFile[] = [];
   for (const file of values.attachments) {
-    uploaded.push(await uploadAttachment(file, (loaded) => onProgress?.(((sentBytes + loaded) / totalBytes) * 100)));
-    sentBytes += file.size;
+    encoded.push(await encodeAttachment(file));
+    onProgress?.((encoded.length / values.attachments.length) * 100);
   }
   onProgress?.(100);
 
@@ -240,6 +238,6 @@ export const submitContactTicket = async (
     email: values.email.trim().toLowerCase(),
     subject: values.subject.trim(),
     message: values.message.trim(),
-    attachments: uploaded,
+    attachments: encoded,
   });
 };
