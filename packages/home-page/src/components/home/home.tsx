@@ -90,6 +90,7 @@ interface Sponsor {
 const SPONSORS: Sponsor[] = [
   { name: 'SYDLE', image: `${ECM_BASE_URL}/Patrocinadores/SYDLE.png/` },
   { name: 'Droga Maxi', image: `${ECM_BASE_URL}/Patrocinadores/drogaMaxi.jpeg/` },
+  { name: 'Sublimação BH', image: `${ECM_BASE_URL}/Patrocinadores/sublimacaoBH.png/` },
 ];
 
 /* Metade da faixa do carrossel precisa cobrir a tela inteira, senão abre um vazio no fim de cada ciclo */
