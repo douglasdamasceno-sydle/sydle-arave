@@ -12,6 +12,10 @@
   --cat-comunidade-text: #8a6200;
   --cat-reuniao: var(--arave-purple-light);
   --cat-reuniao-text: var(--arave-purple-light);
+  --cat-feriado: #dc2626;
+  --cat-feriado-text: #b91c1c;
+  --cat-comemorativa: #0284c7;
+  --cat-comemorativa-text: #0369a1;
 
   display: block;
   font-family: 'Open Sans', 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
@@ -50,6 +54,11 @@ button {
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: 32px;
   align-items: start;
+
+  /* Em tela larga a grade fica compacta e a lista ganha espaço para as colunas dos meses */
+  @media (width > 1100px) {
+    grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+  }
 
   @media (width <= 900px) {
     grid-template-columns: 1fr;
@@ -265,6 +274,8 @@ button {
   &.dot-cultura { background: var(--cat-cultura); }
   &.dot-comunidade { background: var(--cat-comunidade); }
   &.dot-reuniao { background: var(--cat-reuniao); }
+  &.dot-feriado { background: var(--cat-feriado); }
+  &.dot-comemorativa { background: var(--cat-comemorativa); }
 }
 
 .legend {
@@ -304,8 +315,41 @@ button {
 
 /* No desktop o título da lista fica na mesma altura do título do mês (padding do card) */
 .list-panel {
+  container-type: inline-size;
+
   @media (width > 900px) {
     padding-top: 24px;
+  }
+}
+
+/* Próximos eventos: um mês por coluna quando a lista é larga o bastante; senão, um embaixo do outro */
+.month-columns {
+  display: grid;
+  gap: 0 24px;
+
+  @container (width >= 560px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.month-column {
+  min-width: 0;
+
+  /* O nome do mês abre a coluna, sem margem acima */
+  .list-group-label {
+    margin-top: 0;
+  }
+
+  /* Em coluna única, espaço entre um mês e o seguinte */
+  + .month-column {
+    margin-top: 24px;
+  }
+
+  @container (width >= 560px) {
+    + .month-column {
+      margin-top: 0;
+    }
   }
 }
 
@@ -398,6 +442,16 @@ button {
   &.cat-cultura {
     --cat-color: var(--cat-cultura);
     --cat-text: var(--cat-cultura-text);
+  }
+
+  &.cat-feriado {
+    --cat-color: var(--cat-feriado);
+    --cat-text: var(--cat-feriado-text);
+  }
+
+  &.cat-comemorativa {
+    --cat-color: var(--cat-comemorativa);
+    --cat-text: var(--cat-comemorativa-text);
   }
 
   &.cat-reuniao {

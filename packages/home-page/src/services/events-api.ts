@@ -11,13 +11,16 @@ export const EVENTS_API_METHOD = 'listEvents';
 /** Todas as datas do calendário são exibidas no horário de Belo Horizonte. */
 export const EVENTS_TIME_ZONE = 'America/Sao_Paulo';
 
-export type EventCategory = 'esporte' | 'cultura' | 'comunidade' | 'reuniao';
+/* `feriado` e `comemorativa` vêm das classes Feriado e Data comemorativa (dia inteiro, não são cadastrados em Evento) */
+export type EventCategory = 'esporte' | 'cultura' | 'comunidade' | 'reuniao' | 'feriado' | 'comemorativa';
 
 export const EVENT_CATEGORY_LABEL: Record<EventCategory, string> = {
   esporte: 'Esporte',
   cultura: 'Cultura',
   comunidade: 'Comunidade',
   reuniao: 'Reunião',
+  feriado: 'Feriado',
+  comemorativa: 'Data comemorativa',
 };
 
 export interface ArEvent {
@@ -44,7 +47,10 @@ interface RawEvent {
 interface ListEventsInput {
   from: string;
   to: string;
+  /** Máximo de eventos da ARAVE; feriados e datas comemorativas vêm a mais. */
   limit?: number;
+  /** false traz só eventos da ARAVE. Padrão no método: true. */
+  includeHolidays?: boolean;
 }
 
 /* O ambiente não tem campo do tipo JSON, então a lista chega serializada em texto */
@@ -95,6 +101,8 @@ export const formatHour = (date: Date): string => {
 /** Faixa de horário do evento: "18h às 20h", "8h" ou vazio quando o evento não tem hora definida. */
 export const formatEventTime = (event: ArEvent): string => {
   const start = formatHour(event.start);
+  // Dia inteiro (feriados, datas comemorativas e eventos de 0h a 0h): sem faixa de horário
+  if (start === '0h' && (!event.end || formatHour(event.end) === '0h')) return '';
   if (event.end && toDayKey(lastInstant(event)) === toDayKey(event.start)) {
     return `${start} às ${formatHour(event.end)}`;
   }
@@ -104,8 +112,26 @@ export const formatEventTime = (event: ArEvent): string => {
 /* Belo Horizonte está em UTC-3 o ano todo (sem horário de verão desde 2019) */
 const UTC_OFFSET_HOURS = 3;
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 /** Início do mês (0-11) às 00h no horário de Belo Horizonte. */
 const monthStart = (year: number, month: number) => new Date(Date.UTC(year, month, 1, UTC_OFFSET_HOURS));
+
+/** Início do dia de hoje (00h) no horário de Belo Horizonte. */
+const todayStart = (now: Date) => new Date(`${toDayKey(now)}T0${UTC_OFFSET_HOURS}:00:00Z`);
+
+/**
+ * Período exibido na grade do mês: semanas completas de domingo a sábado,
+ * incluindo os dias dos meses vizinhos que aparecem nas pontas.
+ */
+const gridRange = (year: number, month: number) => {
+  const daysBefore = new Date(Date.UTC(year, month, 1)).getUTCDay();
+  const daysAfter = 6 - new Date(Date.UTC(year, month + 1, 0)).getUTCDay();
+  return {
+    from: new Date(monthStart(year, month).getTime() - daysBefore * DAY_MS),
+    to: new Date(monthStart(year, month + 1).getTime() + daysAfter * DAY_MS - 1),
+  };
+};
 
 /* ===== Chamadas ===== */
 
@@ -161,15 +187,16 @@ const listEvents = async (input: ListEventsInput): Promise<ArEvent[]> => {
 /* Cache por mês: voltar a um mês já visto não refaz a busca */
 const monthCache = new Map<string, Promise<ArEvent[]>>();
 
-/** Eventos que acontecem em algum dia do mês (0-11), ordenados pelo início. */
+/**
+ * Eventos dos dias exibidos na grade do mês (0-11), ordenados pelo início.
+ * Inclui os dias dos meses vizinhos que aparecem nas pontas da grade, para que também mostrem os pontinhos.
+ */
 export const fetchMonthEvents = (year: number, month: number): Promise<ArEvent[]> => {
   const key = `${year}-${month}`;
   let request = monthCache.get(key);
   if (!request) {
-    request = listEvents({
-      from: monthStart(year, month).toISOString(),
-      to: new Date(monthStart(year, month + 1).getTime() - 1).toISOString(),
-    });
+    const { from, to } = gridRange(year, month);
+    request = listEvents({ from: from.toISOString(), to: to.toISOString() });
     // Falhas não ficam em cache, para o "Tentar de novo" buscar de verdade
     request.catch(() => monthCache.delete(key));
     monthCache.set(key, request);
@@ -177,9 +204,27 @@ export const fetchMonthEvents = (year: number, month: number): Promise<ArEvent[]
   return request;
 };
 
+/** Janela da lista "Próximos eventos": a partir de hoje, até esta quantidade de dias e de eventos. */
+export const UPCOMING_DAYS = 60;
+export const UPCOMING_LIMIT = 6;
+
+/**
+ * Próximos eventos de hoje até `UPCOMING_DAYS` dias à frente (no máximo `UPCOMING_LIMIT`).
+ * Começa às 00h de hoje para não esconder um evento do dia que já começou.
+ */
+export const fetchUpcomingEvents = (now = new Date()): Promise<ArEvent[]> => {
+  const from = todayStart(now);
+  return listEvents({
+    from: from.toISOString(),
+    to: new Date(from.getTime() + UPCOMING_DAYS * DAY_MS - 1).toISOString(),
+    limit: UPCOMING_LIMIT,
+  });
+};
+
 /** Próximo evento a partir de uma data (procura até 1 ano à frente). */
 export const fetchNextEvent = async (after: Date): Promise<ArEvent | undefined> => {
-  const limit = new Date(after.getTime() + 365 * 24 * 60 * 60 * 1000);
-  const [next] = await listEvents({ from: after.toISOString(), to: limit.toISOString(), limit: 1 });
+  const limit = new Date(after.getTime() + 365 * DAY_MS);
+  // Só eventos da ARAVE: o atalho não deve levar a um feriado
+  const [next] = await listEvents({ from: after.toISOString(), to: limit.toISOString(), limit: 1, includeHolidays: false });
   return next;
 };

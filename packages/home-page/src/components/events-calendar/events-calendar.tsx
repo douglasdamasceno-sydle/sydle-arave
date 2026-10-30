@@ -5,9 +5,11 @@ import {
   EVENT_CATEGORY_LABEL,
   fetchMonthEvents,
   fetchNextEvent,
+  fetchUpcomingEvents,
   formatEventTime,
   lastInstant,
   toDayKey,
+  UPCOMING_DAYS,
 } from '../../services/events-api';
 import { renderIcon } from '../../utils/icons';
 
@@ -80,6 +82,12 @@ const formatLongDay = (key: string) => {
 
 const monthAbbr = (key: string) => MONTHS[parseKey(key).month].slice(0, 3);
 
+/** Primeiro e último dia (chaves) do mês (0-11). */
+const monthBounds = (year: number, month: number) => ({
+  first: keyFromUtc(new Date(Date.UTC(year, month, 1))),
+  last: keyFromUtc(new Date(Date.UTC(year, month + 1, 0))),
+});
+
 const countLabel = (count: number) => `${count} ${count > 1 ? 'eventos' : 'evento'}`;
 
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -106,8 +114,14 @@ export class EventsCalendar {
   @State() selectedKey?: string;
   @State() nextEvent?: ArEvent;
 
+  /* Lista "Próximos eventos": aparece no mês atual quando nenhum dia está selecionado */
+  @State() upcomingStatus: LoadStatus = 'loading';
+  @State() upcoming: ArEvent[] = [];
+  @State() upcomingNext?: ArEvent;
+
   componentWillLoad() {
     this.load();
+    this.loadUpcoming();
   }
 
   componentDidUpdate() {
@@ -132,7 +146,7 @@ export class EventsCalendar {
       return;
     }
 
-    if (!this.events.length) {
+    if (!this.monthEvents().length) {
       // Atalho para o próximo evento; se falhar, o mês continua mostrando "sem eventos"
       const after = new Date(Math.max(Date.UTC(this.year, this.month + 1, 1, 3), Date.now()));
       fetchNextEvent(after)
@@ -141,6 +155,39 @@ export class EventsCalendar {
         })
         .catch(() => undefined);
     }
+  }
+
+  private async loadUpcoming() {
+    this.upcomingStatus = 'loading';
+    this.upcomingNext = undefined;
+
+    try {
+      this.upcoming = await fetchUpcomingEvents();
+      this.upcomingStatus = 'ready';
+    } catch {
+      this.upcomingStatus = 'error';
+      return;
+    }
+
+    if (!this.upcoming.length) {
+      // Nada nos próximos dias: oferece o atalho para o primeiro evento depois da janela
+      const after = new Date(Date.now() + UPCOMING_DAYS * 24 * 60 * 60 * 1000);
+      fetchNextEvent(after)
+        .then((next) => (this.upcomingNext = next))
+        .catch(() => undefined);
+    }
+  }
+
+  /* No mês atual sem dia selecionado, a lista mostra o que vem pela frente em vez do mês */
+  private isUpcomingMode() {
+    const today = parseKey(this.todayKey);
+    return !this.selectedKey && today.year === this.year && today.month === this.month;
+  }
+
+  /* A grade traz também os dias dos meses vizinhos; a lista do mês mostra só o que toca o mês */
+  private monthEvents() {
+    const { first, last } = monthBounds(this.year, this.month);
+    return this.events.filter((event) => toDayKey(event.start) <= last && toDayKey(lastInstant(event)) >= first);
   }
 
   private goToMonth(year: number, month: number) {
@@ -160,9 +207,9 @@ export class EventsCalendar {
     this.goToMonth(year, month);
   };
 
-  private goToNextEvent = () => {
-    if (!this.nextEvent) return;
-    const key = toDayKey(this.nextEvent.start);
+  private goToEvent = (event?: ArEvent) => {
+    if (!event) return;
+    const key = toDayKey(event.start);
     const { year, month } = parseKey(key);
     this.goToMonth(year, month);
     this.selectedKey = key;
@@ -297,7 +344,7 @@ export class EventsCalendar {
         <div class="list-message">
           <p>{this.selectedKey ? 'Nenhum evento neste dia.' : 'Nenhum evento neste mês.'}</p>
           {!this.selectedKey && this.nextEvent && (
-            <button type="button" class="text-button" onClick={this.goToNextEvent}>
+            <button type="button" class="text-button" onClick={() => this.goToEvent(this.nextEvent)}>
               Ver próximo evento: {formatLongDay(toDayKey(this.nextEvent.start))}
             </button>
           )}
@@ -322,8 +369,73 @@ export class EventsCalendar {
     );
   }
 
+  /* Próximos eventos agrupados por mês; um evento que já começou entra no mês de hoje */
+  private renderUpcoming() {
+    if (this.upcomingStatus === 'loading') {
+      return (
+        <ul class="event-list" aria-hidden="true">
+          <li class="event-skeleton"></li>
+          <li class="event-skeleton"></li>
+        </ul>
+      );
+    }
+
+    if (this.upcomingStatus === 'error') {
+      return (
+        <div class="list-message">
+          <p>Não foi possível carregar os eventos.</p>
+          <button type="button" class="text-button" onClick={() => this.loadUpcoming()}>
+            Tentar de novo
+          </button>
+        </div>
+      );
+    }
+
+    if (!this.upcoming.length) {
+      return (
+        <div class="list-message">
+          <p>Nenhum evento nos próximos {UPCOMING_DAYS} dias.</p>
+          {this.upcomingNext && (
+            <button type="button" class="text-button" onClick={() => this.goToEvent(this.upcomingNext)}>
+              Ver próximo evento: {formatLongDay(toDayKey(this.upcomingNext.start))}
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    const groups = new Map<string, ArEvent[]>();
+    for (const event of this.upcoming) {
+      const startKey = toDayKey(event.start);
+      const { year, month } = parseKey(startKey < this.todayKey ? this.todayKey : startKey);
+      const key = `${year}-${month}`;
+      groups.set(key, [...(groups.get(key) ?? []), event]);
+    }
+
+    // Só os dois primeiros meses, cada um em sua coluna
+    return (
+      <div class="month-columns">
+        {Array.from(groups.entries())
+          .slice(0, 2)
+          .map(([key, events]) => (
+            <section key={key} class="month-column">
+              <h4 class="list-group-label">{MONTHS[Number(key.split('-')[1])]}</h4>
+              <ul class="event-list">{events.map((event) => this.renderEvent(event))}</ul>
+            </section>
+          ))}
+      </div>
+    );
+  }
+
   /* Resumo curto para leitor de tela, em vez de anunciar a lista inteira a cada troca */
   private statusMessage(list: ArEvent[]) {
+    if (this.isUpcomingMode()) {
+      if (this.upcomingStatus === 'loading') return '';
+      if (this.upcomingStatus === 'error') return 'Não foi possível carregar os eventos.';
+      return this.upcoming.length
+        ? `${countLabel(this.upcoming.length)} nos próximos ${UPCOMING_DAYS} dias`
+        : `Nenhum evento nos próximos ${UPCOMING_DAYS} dias`;
+    }
     if (this.status === 'loading') return '';
     if (this.status === 'error') return 'Não foi possível carregar os eventos.';
     const where = this.selectedKey ? formatLongDay(this.selectedKey) : `${MONTHS[this.month]} de ${this.year}`;
@@ -333,11 +445,16 @@ export class EventsCalendar {
   render() {
     const grid = buildMonthGrid(this.year, this.month);
     const eventsByDay = this.status === 'ready' ? this.eventsByDay() : new Map<string, ArEvent[]>();
-    const list = this.selectedKey ? eventsByDay.get(this.selectedKey) ?? [] : this.events;
+    const list = this.selectedKey ? eventsByDay.get(this.selectedKey) ?? [] : this.monthEvents();
+    const upcomingMode = this.isUpcomingMode();
     const monthName = MONTHS[this.month];
     const today = parseKey(this.todayKey);
     const isCurrentMonth = today.year === this.year && today.month === this.month;
-    const listTitle = this.selectedKey ? `Eventos em ${formatLongDay(this.selectedKey)}` : `Eventos de ${monthName}`;
+    const listTitle = this.selectedKey
+      ? `Eventos em ${formatLongDay(this.selectedKey)}`
+      : upcomingMode
+        ? 'Próximos eventos'
+        : `Eventos de ${monthName}`;
 
     return (
       <Host>
@@ -398,7 +515,7 @@ export class EventsCalendar {
             <p class="visually-hidden" role="status">
               {this.statusMessage(list)}
             </p>
-            {this.renderList(list)}
+            {upcomingMode ? this.renderUpcoming() : this.renderList(list)}
           </div>
         </div>
       </Host>
