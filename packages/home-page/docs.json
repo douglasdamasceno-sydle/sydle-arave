@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-30T14:48:30",
+  "timestamp": "2026-11-05T14:58:41",
   "compiler": {
     "name": "@stencil/core",
     "version": "4.44.0",
@@ -46,10 +46,10 @@
         },
         {
           "name": "kind",
-          "type": "\"associate\" | \"feedback\"",
+          "type": "\"associate\" | \"feedback\" | \"sponsor\"",
           "complexType": {
             "original": "ContactKind",
-            "resolved": "\"associate\" | \"feedback\"",
+            "resolved": "\"associate\" | \"feedback\" | \"sponsor\"",
             "references": {
               "ContactKind": {
                 "location": "import",
@@ -62,7 +62,7 @@
           "mutable": false,
           "attr": "kind",
           "reflectToAttr": false,
-          "docs": "Qual formulário exibir: \"Associe-se\" ou \"Sugestões e reclamações\".",
+          "docs": "Qual formulário exibir: \"Associe-se\", \"Seja um patrocinador\" ou \"Sugestões e reclamações\".",
           "docsTags": [
             {
               "name": "default",
@@ -77,6 +77,10 @@
             },
             {
               "value": "feedback",
+              "type": "string"
+            },
+            {
+              "value": "sponsor",
               "type": "string"
             }
           ],
@@ -204,7 +208,7 @@
   ],
   "typeLibrary": {
     "src/services/contact-ticket-api.ts::ContactKind": {
-      "declaration": "export type ContactKind = 'associate' | 'feedback';",
+      "declaration": "export type ContactKind = 'associate' | 'sponsor' | 'feedback';",
       "docstring": "",
       "path": "src/services/contact-ticket-api.ts"
     }

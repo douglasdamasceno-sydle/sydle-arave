@@ -8,12 +8,13 @@ import { CustomAPI, DefaultRestService } from '@sydle/ui-api';
 export const CONTACT_API_CLASS_ID = '6adfa759372cae5ca5840b26';
 
 /** Formulários que abrem ticket pelo site. */
-export type ContactKind = 'associate' | 'feedback';
+export type ContactKind = 'associate' | 'sponsor' | 'feedback';
 export type FeedbackType = 'suggestion' | 'complaint';
 
 /** Um método público por formulário: cada um abre o ticket na sua classificação. */
 export const CONTACT_API_METHODS: Record<ContactKind, string> = {
   associate: 'abrirTicketSite',
+  sponsor: 'abrirPatrocinioSite',
   feedback: 'abrirSugestaoSite',
 };
 
@@ -129,7 +130,7 @@ export const validateFile = (file: File): string | undefined => {
 export const validateContactForm = (values: ContactFormValues, kind: ContactKind = 'associate'): ContactFormErrors => {
   const errors: ContactFormErrors = {};
   const { name, phone, email, subject, message, attachments } = CONTACT_LIMITS;
-  const identityRequired = kind === 'associate';
+  const identityRequired = kind !== 'feedback';
 
   if (kind === 'feedback' && !values.type) errors.type = 'Escolha se é uma sugestão ou uma reclamação.';
 

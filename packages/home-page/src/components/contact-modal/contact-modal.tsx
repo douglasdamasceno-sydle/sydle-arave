@@ -44,6 +44,15 @@ const COPY: Record<
     successTitle: 'Mensagem enviada!',
     successText: 'Recebemos seu contato e nossa equipe vai responder pelo telefone ou e-mail informado.',
   },
+  sponsor: {
+    eyebrow: 'Patrocínio',
+    title: 'Seja um patrocinador',
+    intro: 'Conte sobre sua empresa e nossa equipe entrará em contato.',
+    subjectPlaceholder: 'Ex.: Quero patrocinar a ARAVE',
+    messagePlaceholder: 'Conte sobre a empresa e como você gostaria de apoiar a ARAVE.',
+    successTitle: 'Mensagem enviada!',
+    successText: 'Obrigado pelo interesse em apoiar a ARAVE. Nossa equipe vai responder pelo telefone ou e-mail informado.',
+  },
   feedback: {
     eyebrow: 'Ouvidoria',
     title: 'Sugestões e reclamações',
@@ -83,7 +92,7 @@ export class ContactModal {
   /** Assunto pré-preenchido ao abrir o modal. */
   @Prop() defaultSubject = '';
 
-  /** Qual formulário exibir: "Associe-se" ou "Sugestões e reclamações". */
+  /** Qual formulário exibir: "Associe-se", "Seja um patrocinador" ou "Sugestões e reclamações". */
   @Prop() kind: ContactKind = 'associate';
 
   @State() values: ContactFormValues = emptyValues();

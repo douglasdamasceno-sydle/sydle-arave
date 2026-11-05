@@ -997,13 +997,107 @@
   overflow: hidden;
   background-color: var(--arave-white);
 
+  /* Card compartilhado entre a grade e o carrossel */
+  .sponsor-card {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: clamp(15rem, 28vw, 21rem);
+    aspect-ratio: 16 / 9;
+    padding: 24px 32px; /* Respiro uniforme: equilibra logos de proporções e pesos diferentes */
+    overflow: hidden;
+    color: inherit;
+    text-decoration: none;
+    background: var(--arave-white); /* Fundo neutro para logos com fundo próprio não destoarem */
+    border: 1px solid rgb(63 27 108 / 10%);
+    border-radius: var(--arave-radius-md);
+    box-shadow: var(--arave-shadow-sm);
+    transition:
+      transform 0.4s var(--arave-ease-out),
+      box-shadow 0.4s var(--arave-ease-out),
+      border-color 0.4s ease;
+
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* Logos de qualquer proporção aparecem inteiros */
+      object-position: center;
+      transition:
+        transform 0.5s var(--arave-ease-out),
+        filter 0.4s ease;
+    }
+
+    span {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--arave-text-muted);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    &.is-link {
+      cursor: pointer;
+
+      &:focus-visible {
+        outline: 2px solid var(--arave-purple-light);
+        outline-offset: 3px;
+      }
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        border-color: rgb(255 184 0 / 55%);
+        box-shadow: var(--arave-shadow-md);
+        transform: translateY(-6px);
+
+        img {
+          filter: grayscale(0%);
+          transform: scale(1.05);
+        }
+      }
+    }
+  }
+
+  /* Grade estática: usada enquanto houver poucos patrocinadores (SPONSOR_GRID_MAX no home.tsx) */
+  .sponsors-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: center; /* Card que sobra na última linha fica centralizado */
+    padding: 16px 0 8px;
+    margin: 8px 0 0; /* Título (24) + 8 + padding (16) = 48px, o mesmo ritmo das outras seções */
+    list-style: none;
+
+    li {
+      display: flex;
+    }
+
+    @media (width <= 640px) {
+      gap: 16px;
+
+      /* 2 por linha no celular; o terceiro centraliza sozinho na linha de baixo */
+      li {
+        flex: 0 0 calc(50% - 8px);
+      }
+
+      .sponsor-card {
+        width: 100%;
+        padding: 16px;
+      }
+    }
+  }
+
+  /* Carrossel: usado quando a lista passa de SPONSOR_GRID_MAX */
   .sponsors-carousel {
     position: relative;
     display: flex;
     width: 100%;
     max-width: 1600px; /* Em telas muito largas a faixa não precisa cobrir tudo */
     padding: 16px 0 24px;
-    margin: 8px auto 0; /* Título (24) + 8 + padding (16) = 48px, o mesmo ritmo das outras seções */
+    margin: 8px auto 0;
     overflow: hidden;
     mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
 
@@ -1012,81 +1106,35 @@
       align-items: center;
       width: max-content;
       will-change: transform;
-      animation: marquee 32s linear infinite;
+      animation: marquee var(--marquee-duration, 32s) linear infinite;
 
       &:hover,
+      &:focus-within, /* Quem navega por Tab também consegue parar num logo */
       &.is-paused {
         animation-play-state: paused;
       }
     }
 
     .sponsor-card {
-      display: flex;
-      flex-shrink: 0;
-      align-items: center;
-      justify-content: center;
-      width: clamp(15rem, 28vw, 21rem);
-      aspect-ratio: 16 / 9;
-      padding: 24px 32px; /* Respiro para o logo inteiro caber sem corte */
       margin-right: 24px;
-      overflow: hidden;
-      background:
-        linear-gradient(135deg, var(--arave-bg-soft) 0%, var(--arave-white) 100%);
-      border: 1px solid rgb(63 27 108 / 8%);
-      border-radius: var(--arave-radius-md);
-      box-shadow: var(--arave-shadow-sm);
-      transition:
-        transform 0.4s var(--arave-ease-out),
-        box-shadow 0.4s var(--arave-ease-out),
-        border-color 0.4s ease;
-
-      img {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: contain; /* Logos de qualquer proporção aparecem inteiros */
-        object-position: center;
-        transition:
-          transform 0.5s var(--arave-ease-out),
-          filter 0.4s ease;
-      }
-
-      span {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: var(--arave-text-muted);
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-      }
-
-      @media (hover: hover) {
-        &:hover {
-          border-color: rgb(255 184 0 / 55%);
-          box-shadow: var(--arave-shadow-md);
-          transform: translateY(-6px);
-
-          img {
-            filter: grayscale(0%);
-            transform: scale(1.05);
-          }
-        }
-      }
     }
   }
 
   .marquee-toggle {
     display: inline-flex;
+    gap: 8px;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    padding: 0;
+    min-height: 44px;
+    padding: 0 18px;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
     color: var(--arave-purple-main);
     cursor: pointer;
     background: var(--arave-white);
     border: 1px solid rgb(63 27 108 / 16%);
-    border-radius: 50%;
+    border-radius: 999px;
     transition:
       background-color 0.2s ease,
       border-color 0.2s ease;
@@ -1105,6 +1153,39 @@
     &:focus-visible {
       outline: 2px solid var(--arave-purple-light);
       outline-offset: 2px;
+    }
+  }
+
+  /* Chamada para novos patrocinadores */
+  .sponsors-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+    align-items: center;
+    justify-content: center;
+    max-width: 760px;
+    padding: 16px 24px;
+    margin: 32px auto 0;
+    text-align: center;
+    background: var(--arave-bg-soft);
+    border: 1px dashed rgb(63 27 108 / 18%);
+    border-radius: var(--arave-radius-md);
+
+    p {
+      margin: 0;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      color: var(--arave-text-muted);
+      text-wrap: balance;
+
+      strong {
+        color: var(--arave-text-dark);
+      }
+    }
+
+    @media (width <= 640px) {
+      flex-direction: column;
+      padding: 20px;
     }
   }
 }
@@ -1643,7 +1724,7 @@
 
 /* Responsividade */
 @media (hover: hover) {
-  .sponsors-section .sponsors-carousel .sponsor-card img { filter: grayscale(35%); }
+  .sponsors-section .sponsor-card img { filter: grayscale(35%); }
 }
 
 @media (width <= 640px) {
@@ -1669,7 +1750,27 @@
     animation-iteration-count: 1 !important;
   }
 
-  .sponsors-section .sponsors-carousel .sponsors-track {
-    animation: none;
+  /* Sem animação, a faixa vira uma lista com rolagem lateral: todos os logos continuam alcançáveis */
+  .sponsors-section .sponsors-carousel {
+    overflow-x: auto;
+    mask-image: none;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 20px;
+
+    .sponsors-track {
+      padding-inline: 20px;
+      margin-inline: auto;
+      animation: none;
+    }
+
+    .sponsor-card {
+      scroll-snap-align: start;
+
+      /* As cópias só existem para o loop infinito */
+      &[aria-hidden='true'] { display: none; }
+    }
   }
+
+  /* Não há o que pausar */
+  .sponsors-section .marquee-toggle { display: none; }
 }

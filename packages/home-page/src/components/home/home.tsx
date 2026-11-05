@@ -85,6 +85,8 @@ const HERO_PHOTO_URL = `${ECM_BASE_URL}/pascoa.jpg/`;
 interface Sponsor {
   name: string;
   image?: string;
+  /** Site ou rede social do patrocinador. Se informado, o card vira link (abre em nova aba). */
+  url?: string;
 }
 
 const SPONSORS: Sponsor[] = [
@@ -93,9 +95,20 @@ const SPONSORS: Sponsor[] = [
   { name: 'Sublimação BH', image: `${ECM_BASE_URL}/Patrocinadores/sublimacaoBH.png/` },
 ];
 
+/* Com poucos patrocinadores, uma grade estática mostra todos de uma vez, sem repetição nem animação.
+   Acima deste número a grade fica longa demais e o carrossel passa a valer a pena. */
+const SPONSOR_GRID_MAX = 6;
+const SPONSORS_AS_GRID = SPONSORS.length <= SPONSOR_GRID_MAX;
+
 /* Metade da faixa do carrossel precisa cobrir a tela inteira, senão abre um vazio no fim de cada ciclo */
 const SPONSOR_MIN_LOOP = 8;
 const SPONSOR_LOOP = Array.from({ length: Math.ceil(SPONSOR_MIN_LOOP / SPONSORS.length) }, () => SPONSORS).flat();
+
+/* Velocidade constante (~3,5s por card) independentemente de quantos patrocinadores existem */
+const SPONSOR_SECONDS_PER_CARD = 3.5;
+const SPONSOR_MARQUEE_DURATION = `${SPONSOR_LOOP.length * SPONSOR_SECONDS_PER_CARD}s`;
+
+const ASSOCIATE_SUBJECT = 'Quero me associar à ARAVE';
 
 @Component({
   tag: 'sy-lib-home',
@@ -104,6 +117,7 @@ const SPONSOR_LOOP = Array.from({ length: Math.ceil(SPONSOR_MIN_LOOP / SPONSORS.
 })
 export class Home {
   @State() contactOpen = false;
+  @State() sponsorOpen = false;
   @State() feedbackOpen = false;
   @State() sponsorsPaused = false;
 
@@ -111,6 +125,8 @@ export class Home {
   private eventsEl?: HTMLElement;
 
   private openContact = () => (this.contactOpen = true);
+  private openSponsorContact = () => (this.sponsorOpen = true);
+  private closeSponsor = () => (this.sponsorOpen = false);
   private scrollToActivities = () => this.activitiesEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   /* Leva também o foco para o título do calendário, para o próximo Tab continuar de lá */
   private scrollToEvents = () => {
@@ -138,12 +154,77 @@ export class Home {
     </ul>
   );
 
-  /* A cópia do loop fica oculta para o leitor de tela não ler cada logo duas vezes */
-  private renderSponsorCard = (sponsor: Sponsor, isCopy = false) => (
-    <div class="sponsor-card" aria-hidden={isCopy ? 'true' : undefined}>
-      {sponsor.image ? <img src={sponsor.image} alt={isCopy ? '' : sponsor.name} /> : <span>{sponsor.name}</span>}
-    </div>
-  );
+  /* A cópia do loop fica oculta para o leitor de tela não ler cada logo duas vezes e fora da ordem do Tab */
+  private renderSponsorCard = (sponsor: Sponsor, isCopy = false) => {
+    const content = sponsor.image ? (
+      <img src={sponsor.image} alt={isCopy ? '' : sponsor.name} loading="lazy" decoding="async" />
+    ) : (
+      <span>{sponsor.name}</span>
+    );
+
+    if (!sponsor.url) {
+      return (
+        <div class="sponsor-card" aria-hidden={isCopy ? 'true' : undefined}>
+          {content}
+        </div>
+      );
+    }
+
+    return (
+      <a
+        class="sponsor-card is-link"
+        href={sponsor.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-hidden={isCopy ? 'true' : undefined}
+        tabindex={isCopy ? -1 : undefined}
+        title={isCopy ? undefined : `Conhecer ${sponsor.name} (abre em nova aba)`}
+      >
+        {content}
+      </a>
+    );
+  };
+
+  private renderSponsors = () => {
+    if (SPONSORS_AS_GRID) {
+      return (
+        <div class="container">
+          <ul class="sponsors-grid">
+            {SPONSORS.map((sponsor) => (
+              <li key={sponsor.name}>{this.renderSponsorCard(sponsor)}</li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    return [
+      <div class="sponsors-carousel">
+        <div
+          class={{ 'sponsors-track': true, 'is-paused': this.sponsorsPaused }}
+          style={{ '--marquee-duration': SPONSOR_MARQUEE_DURATION }}
+        >
+          {/* Lista duplicada (via array, não copiada no JSX) para o loop infinito do CSS */}
+          {SPONSOR_LOOP.map((sponsor, index) => this.renderSponsorCard(sponsor, index >= SPONSORS.length))}
+          {SPONSOR_LOOP.map((sponsor) => this.renderSponsorCard(sponsor, true))}
+        </div>
+      </div>,
+
+      /* No toque não existe hover: o botão é a forma de pausar a animação (WCAG 2.2.2) */
+      <div class="container text-center">
+        <button
+          type="button"
+          class="marquee-toggle"
+          aria-pressed={this.sponsorsPaused ? 'true' : 'false'}
+          aria-label={this.sponsorsPaused ? 'Retomar animação dos patrocinadores' : 'Pausar animação dos patrocinadores'}
+          onClick={this.toggleSponsors}
+        >
+          {renderIcon(this.sponsorsPaused ? 'play' : 'pause')}
+          <span aria-hidden="true">{this.sponsorsPaused ? 'Retomar' : 'Pausar'}</span>
+        </button>
+      </div>,
+    ];
+  };
 
   render() {
     return (
@@ -357,25 +438,18 @@ export class Home {
               <h2 class="section-title">Nossos Patrocinadores</h2>
             </div>
 
-            <div class="sponsors-carousel">
-              <div class={{ 'sponsors-track': true, 'is-paused': this.sponsorsPaused }}>
-                {/* Lista duplicada (via array, não copiada no JSX) para o loop infinito do CSS */}
-                {SPONSOR_LOOP.map((sponsor, index) => this.renderSponsorCard(sponsor, index >= SPONSORS.length))}
-                {SPONSOR_LOOP.map((sponsor) => this.renderSponsorCard(sponsor, true))}
-              </div>
-            </div>
+            {this.renderSponsors()}
 
-            {/* No toque não existe hover: o botão é a forma de pausar a animação (WCAG 2.2.2) */}
-            <div class="container text-center">
-              <button
-                type="button"
-                class="marquee-toggle"
-                aria-pressed={this.sponsorsPaused ? 'true' : 'false'}
-                aria-label={this.sponsorsPaused ? 'Retomar animação dos patrocinadores' : 'Pausar animação dos patrocinadores'}
-                onClick={this.toggleSponsors}
-              >
-                {renderIcon(this.sponsorsPaused ? 'play' : 'pause')}
-              </button>
+            {/* Captação de novos apoiadores: reaproveita o formulário de contato com o assunto preenchido */}
+            <div class="container">
+              <div class="sponsors-cta">
+                <p>
+                  <strong>Quer apoiar a ARAVE?</strong> Sua empresa ganha espaço aqui.
+                </p>
+                <sy-button color="primary" variant="outlined" onClick={this.openSponsorContact}>
+                  Seja um patrocinador
+                </sy-button>
+              </div>
             </div>
           </section>
 
@@ -584,16 +658,23 @@ export class Home {
           </footer>
         </div>
 
+        {/* defaultSubject antes de open: o modal lê o assunto no @Watch('open') */}
         <sy-lib-contact-modal
+          defaultSubject={ASSOCIATE_SUBJECT}
           open={this.contactOpen}
-          defaultSubject="Quero me associar à ARAVE"
           onSyLibContactModalClose={this.closeContact}
+        ></sy-lib-contact-modal>
+
+        <sy-lib-contact-modal
+          kind="sponsor"
+          open={this.sponsorOpen}
+          onSyLibContactModalClose={this.closeSponsor}
         ></sy-lib-contact-modal>
 
         {/* Atalho fixo para a ouvidoria, visível em toda a página */}
         <button
           type="button"
-          class={{ 'feedback-fab': true, 'is-hidden': this.contactOpen || this.feedbackOpen }}
+          class={{ 'feedback-fab': true, 'is-hidden': this.contactOpen || this.sponsorOpen || this.feedbackOpen }}
           aria-label="Sugestões e reclamações"
           onClick={this.openFeedback}
         >
