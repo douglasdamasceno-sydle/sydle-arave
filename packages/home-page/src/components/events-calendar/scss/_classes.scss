@@ -322,37 +322,6 @@ button {
   }
 }
 
-/* Próximos eventos: um mês por coluna quando a lista é larga o bastante; senão, um embaixo do outro */
-.month-columns {
-  display: grid;
-  gap: 0 24px;
-
-  @container (width >= 560px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-  }
-}
-
-.month-column {
-  min-width: 0;
-
-  /* O nome do mês abre a coluna, sem margem acima */
-  .list-group-label {
-    margin-top: 0;
-  }
-
-  /* Em coluna única, espaço entre um mês e o seguinte */
-  + .month-column {
-    margin-top: 24px;
-  }
-
-  @container (width >= 560px) {
-    + .month-column {
-      margin-top: 0;
-    }
-  }
-}
-
 .list-header {
   display: flex;
   flex-wrap: wrap;
@@ -586,6 +555,16 @@ button {
     font-size: 0.875rem;
     color: var(--arave-text-muted);
   }
+
+  p + p {
+    margin-top: 8px;
+  }
+}
+
+/* "Ver mais / Ver menos" da lista do mês */
+.show-more {
+  display: block;
+  margin: 4px auto 0;
 }
 
 @keyframes shimmer {

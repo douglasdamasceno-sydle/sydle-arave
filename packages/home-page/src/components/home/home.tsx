@@ -85,7 +85,7 @@ const HERO_PHOTO_URL = `${ECM_BASE_URL}/pascoa.jpg/`;
 interface Sponsor {
   name: string;
   image?: string;
-  /** Site ou rede social do patrocinador. Se informado, o card vira link (abre em nova aba). */
+  /** Site ou rede social do parceiro. Se informado, o card vira link (abre em nova aba). */
   url?: string;
 }
 
@@ -95,7 +95,7 @@ const SPONSORS: Sponsor[] = [
   { name: 'Sublimação BH', image: `${ECM_BASE_URL}/Patrocinadores/sublimacaoBH.png/` },
 ];
 
-/* Com poucos patrocinadores, uma grade estática mostra todos de uma vez, sem repetição nem animação.
+/* Com poucos parceiros, uma grade estática mostra todos de uma vez, sem repetição nem animação.
    Acima deste número a grade fica longa demais e o carrossel passa a valer a pena. */
 const SPONSOR_GRID_MAX = 6;
 const SPONSORS_AS_GRID = SPONSORS.length <= SPONSOR_GRID_MAX;
@@ -104,7 +104,7 @@ const SPONSORS_AS_GRID = SPONSORS.length <= SPONSOR_GRID_MAX;
 const SPONSOR_MIN_LOOP = 8;
 const SPONSOR_LOOP = Array.from({ length: Math.ceil(SPONSOR_MIN_LOOP / SPONSORS.length) }, () => SPONSORS).flat();
 
-/* Velocidade constante (~3,5s por card) independentemente de quantos patrocinadores existem */
+/* Velocidade constante (~3,5s por card) independentemente de quantos parceiros existem */
 const SPONSOR_SECONDS_PER_CARD = 3.5;
 const SPONSOR_MARQUEE_DURATION = `${SPONSOR_LOOP.length * SPONSOR_SECONDS_PER_CARD}s`;
 
@@ -216,7 +216,7 @@ export class Home {
           type="button"
           class="marquee-toggle"
           aria-pressed={this.sponsorsPaused ? 'true' : 'false'}
-          aria-label={this.sponsorsPaused ? 'Retomar animação dos patrocinadores' : 'Pausar animação dos patrocinadores'}
+          aria-label={this.sponsorsPaused ? 'Retomar animação dos parceiros institucionais' : 'Pausar animação dos parceiros institucionais'}
           onClick={this.toggleSponsors}
         >
           {renderIcon(this.sponsorsPaused ? 'play' : 'pause')}
@@ -431,23 +431,23 @@ export class Home {
             </section>
           )}
 
-          {/* Patrocinadores */}
+          {/* Parceiros institucionais */}
           <section class="sponsors-section">
             <div class="container text-center">
               <span class="section-subtitle">Quem apoia a ARAVE</span>
-              <h2 class="section-title">Nossos Patrocinadores</h2>
+              <h2 class="section-title">Nossos Parceiros Institucionais</h2>
             </div>
 
             {this.renderSponsors()}
 
-            {/* Captação de novos apoiadores: reaproveita o formulário de contato com o assunto preenchido */}
+            {/* Captação de novos parceiros: reaproveita o formulário de contato com o assunto preenchido */}
             <div class="container">
               <div class="sponsors-cta">
                 <p>
                   <strong>Quer apoiar a ARAVE?</strong> Sua empresa ganha espaço aqui.
                 </p>
                 <sy-button color="primary" variant="outlined" onClick={this.openSponsorContact}>
-                  Seja um patrocinador
+                  Seja um parceiro institucional
                 </sy-button>
               </div>
             </div>

@@ -117,9 +117,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** Início do mês (0-11) às 00h no horário de Belo Horizonte. */
 const monthStart = (year: number, month: number) => new Date(Date.UTC(year, month, 1, UTC_OFFSET_HOURS));
 
-/** Início do dia de hoje (00h) no horário de Belo Horizonte. */
-const todayStart = (now: Date) => new Date(`${toDayKey(now)}T0${UTC_OFFSET_HOURS}:00:00Z`);
-
 /**
  * Período exibido na grade do mês: semanas completas de domingo a sábado,
  * incluindo os dias dos meses vizinhos que aparecem nas pontas.
@@ -202,23 +199,6 @@ export const fetchMonthEvents = (year: number, month: number): Promise<ArEvent[]
     monthCache.set(key, request);
   }
   return request;
-};
-
-/** Janela da lista "Próximos eventos": a partir de hoje, até esta quantidade de dias e de eventos. */
-export const UPCOMING_DAYS = 60;
-export const UPCOMING_LIMIT = 6;
-
-/**
- * Próximos eventos de hoje até `UPCOMING_DAYS` dias à frente (no máximo `UPCOMING_LIMIT`).
- * Começa às 00h de hoje para não esconder um evento do dia que já começou.
- */
-export const fetchUpcomingEvents = (now = new Date()): Promise<ArEvent[]> => {
-  const from = todayStart(now);
-  return listEvents({
-    from: from.toISOString(),
-    to: new Date(from.getTime() + UPCOMING_DAYS * DAY_MS - 1).toISOString(),
-    limit: UPCOMING_LIMIT,
-  });
 };
 
 /** Próximo evento a partir de uma data (procura até 1 ano à frente). */

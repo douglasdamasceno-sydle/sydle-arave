@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-05T14:58:41",
+  "timestamp": "2026-11-06T18:03:04",
   "compiler": {
     "name": "@stencil/core",
     "version": "4.44.0",
@@ -62,7 +62,7 @@
           "mutable": false,
           "attr": "kind",
           "reflectToAttr": false,
-          "docs": "Qual formulário exibir: \"Associe-se\", \"Seja um patrocinador\" ou \"Sugestões e reclamações\".",
+          "docs": "Qual formulário exibir: \"Associe-se\", \"Seja um parceiro institucional\" ou \"Sugestões e reclamações\".",
           "docsTags": [
             {
               "name": "default",

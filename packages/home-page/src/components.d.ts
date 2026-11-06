@@ -15,7 +15,7 @@ export namespace Components {
          */
         "defaultSubject": string;
         /**
-          * Qual formulário exibir: "Associe-se", "Seja um patrocinador" ou "Sugestões e reclamações".
+          * Qual formulário exibir: "Associe-se", "Seja um parceiro institucional" ou "Sugestões e reclamações".
           * @default 'associate'
          */
         "kind": ContactKind;
@@ -78,7 +78,7 @@ declare namespace LocalJSX {
          */
         "defaultSubject"?: string;
         /**
-          * Qual formulário exibir: "Associe-se", "Seja um patrocinador" ou "Sugestões e reclamações".
+          * Qual formulário exibir: "Associe-se", "Seja um parceiro institucional" ou "Sugestões e reclamações".
           * @default 'associate'
          */
         "kind"?: ContactKind;

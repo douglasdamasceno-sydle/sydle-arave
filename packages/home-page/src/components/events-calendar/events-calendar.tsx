@@ -5,11 +5,9 @@ import {
   EVENT_CATEGORY_LABEL,
   fetchMonthEvents,
   fetchNextEvent,
-  fetchUpcomingEvents,
   formatEventTime,
   lastInstant,
   toDayKey,
-  UPCOMING_DAYS,
 } from '../../services/events-api';
 import { renderIcon } from '../../utils/icons';
 
@@ -88,6 +86,9 @@ const monthBounds = (year: number, month: number) => ({
   last: keyFromUtc(new Date(Date.UTC(year, month + 1, 0))),
 });
 
+/* A lista do mês mostra poucos cards; o resto fica atrás do "Ver mais" para a seção não crescer demais no celular */
+const MONTH_LIST_LIMIT = 3;
+
 const countLabel = (count: number) => `${count} ${count > 1 ? 'eventos' : 'evento'}`;
 
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -113,15 +114,10 @@ export class EventsCalendar {
   @State() events: ArEvent[] = [];
   @State() selectedKey?: string;
   @State() nextEvent?: ArEvent;
-
-  /* Lista "Próximos eventos": aparece no mês atual quando nenhum dia está selecionado */
-  @State() upcomingStatus: LoadStatus = 'loading';
-  @State() upcoming: ArEvent[] = [];
-  @State() upcomingNext?: ArEvent;
+  @State() showAll = false;
 
   componentWillLoad() {
     this.load();
-    this.loadUpcoming();
   }
 
   componentDidUpdate() {
@@ -146,7 +142,7 @@ export class EventsCalendar {
       return;
     }
 
-    if (!this.monthEvents().length) {
+    if (!this.visibleMonthEvents().length) {
       // Atalho para o próximo evento; se falhar, o mês continua mostrando "sem eventos"
       const after = new Date(Math.max(Date.UTC(this.year, this.month + 1, 1, 3), Date.now()));
       fetchNextEvent(after)
@@ -157,37 +153,16 @@ export class EventsCalendar {
     }
   }
 
-  private async loadUpcoming() {
-    this.upcomingStatus = 'loading';
-    this.upcomingNext = undefined;
-
-    try {
-      this.upcoming = await fetchUpcomingEvents();
-      this.upcomingStatus = 'ready';
-    } catch {
-      this.upcomingStatus = 'error';
-      return;
-    }
-
-    if (!this.upcoming.length) {
-      // Nada nos próximos dias: oferece o atalho para o primeiro evento depois da janela
-      const after = new Date(Date.now() + UPCOMING_DAYS * 24 * 60 * 60 * 1000);
-      fetchNextEvent(after)
-        .then((next) => (this.upcomingNext = next))
-        .catch(() => undefined);
-    }
-  }
-
-  /* No mês atual sem dia selecionado, a lista mostra o que vem pela frente em vez do mês */
-  private isUpcomingMode() {
-    const today = parseKey(this.todayKey);
-    return !this.selectedKey && today.year === this.year && today.month === this.month;
-  }
-
   /* A grade traz também os dias dos meses vizinhos; a lista do mês mostra só o que toca o mês */
   private monthEvents() {
     const { first, last } = monthBounds(this.year, this.month);
     return this.events.filter((event) => toDayKey(event.start) <= last && toDayKey(lastInstant(event)) >= first);
+  }
+
+  /* Na lista do mês só entra o que ainda vai acontecer e não é feriado. Encerrados e feriados
+     continuam marcados na grade e aparecem ao tocar no dia */
+  private visibleMonthEvents() {
+    return this.monthEvents().filter((event) => !this.isPast(event) && event.category !== 'feriado');
   }
 
   private goToMonth(year: number, month: number) {
@@ -195,6 +170,7 @@ export class EventsCalendar {
     this.year = date.getUTCFullYear();
     this.month = date.getUTCMonth();
     this.selectedKey = undefined;
+    this.showAll = false;
     this.load();
   }
 
@@ -224,7 +200,12 @@ export class EventsCalendar {
     this.pendingReveal = Boolean(this.selectedKey) && window.matchMedia(STACKED_QUERY).matches;
   };
 
-  private clearSelection = () => (this.selectedKey = undefined);
+  private clearSelection = () => {
+    this.selectedKey = undefined;
+    this.showAll = false;
+  };
+
+  private toggleShowAll = () => (this.showAll = !this.showAll);
 
   private eventsByDay() {
     const map = new Map<string, ArEvent[]>();
@@ -342,7 +323,10 @@ export class EventsCalendar {
     if (!list.length) {
       return (
         <div class="list-message">
-          <p>{this.selectedKey ? 'Nenhum evento neste dia.' : 'Nenhum evento neste mês.'}</p>
+          <p>{this.selectedKey ? 'Nenhum evento neste dia.' : 'Nenhum evento por vir neste mês.'}</p>
+          {!this.selectedKey && this.monthEvents().length > 0 && (
+            <p>Toque num dia destacado para ver feriados e eventos que já passaram.</p>
+          )}
           {!this.selectedKey && this.nextEvent && (
             <button type="button" class="text-button" onClick={() => this.goToEvent(this.nextEvent)}>
               Ver próximo evento: {formatLongDay(toDayKey(this.nextEvent.start))}
@@ -352,109 +336,46 @@ export class EventsCalendar {
       );
     }
 
-    // No mês todo, o que ainda vai acontecer vem primeiro; os encerrados ficam no fim
-    const upcoming = this.selectedKey ? list : list.filter((event) => !this.isPast(event));
-    const past = this.selectedKey ? [] : list.filter((event) => this.isPast(event));
+    // Dia selecionado mostra tudo; a lista do mês mostra só os primeiros até o usuário pedir mais
+    const collapsible = !this.selectedKey && list.length > MONTH_LIST_LIMIT;
+    const shown = collapsible && !this.showAll ? list.slice(0, MONTH_LIST_LIMIT) : list;
 
     return (
       <Fragment>
-        {upcoming.length > 0 && <ul class="event-list">{upcoming.map((event) => this.renderEvent(event))}</ul>}
-        {past.length > 0 && (
-          <Fragment>
-            <h4 class="list-group-label">Encerrados</h4>
-            <ul class="event-list">{past.map((event) => this.renderEvent(event))}</ul>
-          </Fragment>
+        <ul class="event-list">{shown.map((event) => this.renderEvent(event))}</ul>
+        {/* O botão alterna em vez de sumir, para o foco do teclado não se perder ao expandir */}
+        {collapsible && (
+          <button
+            type="button"
+            class="text-button show-more"
+            aria-expanded={this.showAll ? 'true' : 'false'}
+            onClick={this.toggleShowAll}
+          >
+            {this.showAll ? 'Ver menos' : `Ver mais ${countLabel(list.length - MONTH_LIST_LIMIT)}`}
+          </button>
         )}
       </Fragment>
     );
   }
 
-  /* Próximos eventos agrupados por mês; um evento que já começou entra no mês de hoje */
-  private renderUpcoming() {
-    if (this.upcomingStatus === 'loading') {
-      return (
-        <ul class="event-list" aria-hidden="true">
-          <li class="event-skeleton"></li>
-          <li class="event-skeleton"></li>
-        </ul>
-      );
-    }
-
-    if (this.upcomingStatus === 'error') {
-      return (
-        <div class="list-message">
-          <p>Não foi possível carregar os eventos.</p>
-          <button type="button" class="text-button" onClick={() => this.loadUpcoming()}>
-            Tentar de novo
-          </button>
-        </div>
-      );
-    }
-
-    if (!this.upcoming.length) {
-      return (
-        <div class="list-message">
-          <p>Nenhum evento nos próximos {UPCOMING_DAYS} dias.</p>
-          {this.upcomingNext && (
-            <button type="button" class="text-button" onClick={() => this.goToEvent(this.upcomingNext)}>
-              Ver próximo evento: {formatLongDay(toDayKey(this.upcomingNext.start))}
-            </button>
-          )}
-        </div>
-      );
-    }
-
-    const groups = new Map<string, ArEvent[]>();
-    for (const event of this.upcoming) {
-      const startKey = toDayKey(event.start);
-      const { year, month } = parseKey(startKey < this.todayKey ? this.todayKey : startKey);
-      const key = `${year}-${month}`;
-      groups.set(key, [...(groups.get(key) ?? []), event]);
-    }
-
-    // Só os dois primeiros meses, cada um em sua coluna
-    return (
-      <div class="month-columns">
-        {Array.from(groups.entries())
-          .slice(0, 2)
-          .map(([key, events]) => (
-            <section key={key} class="month-column">
-              <h4 class="list-group-label">{MONTHS[Number(key.split('-')[1])]}</h4>
-              <ul class="event-list">{events.map((event) => this.renderEvent(event))}</ul>
-            </section>
-          ))}
-      </div>
-    );
-  }
-
   /* Resumo curto para leitor de tela, em vez de anunciar a lista inteira a cada troca */
   private statusMessage(list: ArEvent[]) {
-    if (this.isUpcomingMode()) {
-      if (this.upcomingStatus === 'loading') return '';
-      if (this.upcomingStatus === 'error') return 'Não foi possível carregar os eventos.';
-      return this.upcoming.length
-        ? `${countLabel(this.upcoming.length)} nos próximos ${UPCOMING_DAYS} dias`
-        : `Nenhum evento nos próximos ${UPCOMING_DAYS} dias`;
-    }
     if (this.status === 'loading') return '';
     if (this.status === 'error') return 'Não foi possível carregar os eventos.';
     const where = this.selectedKey ? formatLongDay(this.selectedKey) : `${MONTHS[this.month]} de ${this.year}`;
-    return list.length ? `${countLabel(list.length)} em ${where}` : `Nenhum evento em ${where}`;
+    const label = this.selectedKey ? countLabel(list.length) : `${countLabel(list.length)} por vir`;
+    return list.length ? `${label} em ${where}` : `Nenhum evento ${this.selectedKey ? '' : 'por vir '}em ${where}`;
   }
 
   render() {
     const grid = buildMonthGrid(this.year, this.month);
     const eventsByDay = this.status === 'ready' ? this.eventsByDay() : new Map<string, ArEvent[]>();
-    const list = this.selectedKey ? eventsByDay.get(this.selectedKey) ?? [] : this.monthEvents();
-    const upcomingMode = this.isUpcomingMode();
+    const list = this.selectedKey ? eventsByDay.get(this.selectedKey) ?? [] : this.visibleMonthEvents();
     const monthName = MONTHS[this.month];
     const today = parseKey(this.todayKey);
     const isCurrentMonth = today.year === this.year && today.month === this.month;
-    const listTitle = this.selectedKey
-      ? `Eventos em ${formatLongDay(this.selectedKey)}`
-      : upcomingMode
-        ? 'Próximos eventos'
-        : `Eventos de ${monthName}`;
+    // Mesmo no mês atual a lista fica restrita ao mês exibido; os seguintes ficam a uma seta de distância
+    const listTitle = this.selectedKey ? `Eventos em ${formatLongDay(this.selectedKey)}` : `Eventos de ${monthName}`;
 
     return (
       <Host>
@@ -515,7 +436,7 @@ export class EventsCalendar {
             <p class="visually-hidden" role="status">
               {this.statusMessage(list)}
             </p>
-            {upcomingMode ? this.renderUpcoming() : this.renderList(list)}
+            {this.renderList(list)}
           </div>
         </div>
       </Host>
