@@ -1,6 +1,7 @@
 import { Component, h, Host, State } from '@stencil/core';
 
 import { isEventsApiConfigured } from '../../services/events-api';
+import { isGalleryApiConfigured } from '../../services/gallery-api';
 import { renderIcon } from '../../utils/icons';
 
 const ECM_BASE_URL = 'https://arave-partner.sydle.one/api/1/main/_ecm/_defaultFile/www';
@@ -120,20 +121,30 @@ export class Home {
   @State() sponsorOpen = false;
   @State() feedbackOpen = false;
   @State() sponsorsPaused = false;
+  /* Sem nenhum álbum publicado, a seção da galeria e o link do rodapé somem */
+  @State() galleryEmpty = false;
 
   private activitiesEl?: HTMLElement;
   private eventsEl?: HTMLElement;
+  private galleryEl?: HTMLElement;
 
   private openContact = () => (this.contactOpen = true);
   private openSponsorContact = () => (this.sponsorOpen = true);
   private closeSponsor = () => (this.sponsorOpen = false);
   private scrollToActivities = () => this.activitiesEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  /* Leva também o foco para o título do calendário, para o próximo Tab continuar de lá */
-  private scrollToEvents = () => {
+  /* Leva também o foco para o título da seção, para o próximo Tab continuar de lá */
+  private scrollToSection = (section?: HTMLElement) => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    this.eventsEl?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-    this.eventsEl?.querySelector<HTMLElement>('.section-title')?.focus({ preventScroll: true });
+    section?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    section?.querySelector<HTMLElement>('.section-title')?.focus({ preventScroll: true });
   };
+  private scrollToEvents = () => this.scrollToSection(this.eventsEl);
+  private scrollToGallery = () => this.scrollToSection(this.galleryEl);
+  private hideGallery = () => (this.galleryEmpty = true);
+
+  private get showGallery() {
+    return isGalleryApiConfigured() && !this.galleryEmpty;
+  }
   private closeContact = () => (this.contactOpen = false);
   private openFeedback = () => (this.feedbackOpen = true);
   private closeFeedback = () => (this.feedbackOpen = false);
@@ -431,6 +442,21 @@ export class Home {
             </section>
           )}
 
+          {/* Galeria de fotos (álbuns publicados pela equipe no serviço "Publicar fotos" do SYDLE ONE) */}
+          {this.showGallery && (
+            <section class="gallery-section" ref={(el) => (this.galleryEl = el)}>
+              <div class="container">
+                <span class="section-subtitle">Momentos ARAVE</span>
+                <h2 class="section-title" tabindex={-1}>
+                  Galeria de fotos
+                </h2>
+                <p class="section-lead">Treinos, festas e encontros da nossa comunidade.</p>
+
+                <sy-lib-photo-gallery onSyLibPhotoGalleryEmpty={this.hideGallery}></sy-lib-photo-gallery>
+              </div>
+            </section>
+          )}
+
           {/* Parceiros institucionais */}
           <section class="sponsors-section">
             <div class="container text-center">
@@ -607,6 +633,13 @@ export class Home {
                         'Eventos Comunitários'
                       )}
                     </li>
+                    {this.showGallery && (
+                      <li>
+                        <button type="button" class="footer-link" onClick={this.scrollToGallery}>
+                          Galeria de fotos
+                        </button>
+                      </li>
+                    )}
                   </ul>
                 </div>
 

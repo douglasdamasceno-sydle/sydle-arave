@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-06T18:03:04",
+  "timestamp": "2026-11-18T17:38:15",
   "compiler": {
     "name": "@stencil/core",
     "version": "4.44.0",
@@ -196,12 +196,55 @@
       "dependents": [],
       "dependencies": [
         "sy-lib-events-calendar",
+        "sy-lib-photo-gallery",
         "sy-lib-contact-modal"
       ],
       "dependencyGraph": {
         "sy-lib-home": [
           "sy-lib-events-calendar",
+          "sy-lib-photo-gallery",
           "sy-lib-contact-modal"
+        ]
+      }
+    },
+    {
+      "filePath": "src/components/photo-gallery/photo-gallery.tsx",
+      "encapsulation": "shadow",
+      "tag": "sy-lib-photo-gallery",
+      "readme": "# sy-lib-photo-gallery\n\n\n",
+      "docs": "",
+      "docsTags": [],
+      "usage": {},
+      "props": [],
+      "methods": [],
+      "events": [
+        {
+          "event": "syLibPhotoGalleryEmpty",
+          "detail": "void",
+          "bubbles": true,
+          "complexType": {
+            "original": "void",
+            "resolved": "void",
+            "references": {}
+          },
+          "cancelable": true,
+          "composed": true,
+          "docs": "Disparado quando não há nenhum álbum publicado: a home esconde a seção.",
+          "docsTags": []
+        }
+      ],
+      "listeners": [],
+      "styles": [],
+      "slots": [],
+      "parts": [],
+      "states": [],
+      "dependents": [
+        "sy-lib-home"
+      ],
+      "dependencies": [],
+      "dependencyGraph": {
+        "sy-lib-home": [
+          "sy-lib-photo-gallery"
         ]
       }
     }

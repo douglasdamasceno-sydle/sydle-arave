@@ -29,10 +29,16 @@ export namespace Components {
     }
     interface SyLibHome {
     }
+    interface SyLibPhotoGallery {
+    }
 }
 export interface SyLibContactModalCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLSyLibContactModalElement;
+}
+export interface SyLibPhotoGalleryCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLSyLibPhotoGalleryElement;
 }
 declare global {
     interface HTMLSyLibContactModalElementEventMap {
@@ -64,10 +70,28 @@ declare global {
         prototype: HTMLSyLibHomeElement;
         new (): HTMLSyLibHomeElement;
     };
+    interface HTMLSyLibPhotoGalleryElementEventMap {
+        "syLibPhotoGalleryEmpty": void;
+    }
+    interface HTMLSyLibPhotoGalleryElement extends Components.SyLibPhotoGallery, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLSyLibPhotoGalleryElementEventMap>(type: K, listener: (this: HTMLSyLibPhotoGalleryElement, ev: SyLibPhotoGalleryCustomEvent<HTMLSyLibPhotoGalleryElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLSyLibPhotoGalleryElementEventMap>(type: K, listener: (this: HTMLSyLibPhotoGalleryElement, ev: SyLibPhotoGalleryCustomEvent<HTMLSyLibPhotoGalleryElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLSyLibPhotoGalleryElement: {
+        prototype: HTMLSyLibPhotoGalleryElement;
+        new (): HTMLSyLibPhotoGalleryElement;
+    };
     interface HTMLElementTagNameMap {
         "sy-lib-contact-modal": HTMLSyLibContactModalElement;
         "sy-lib-events-calendar": HTMLSyLibEventsCalendarElement;
         "sy-lib-home": HTMLSyLibHomeElement;
+        "sy-lib-photo-gallery": HTMLSyLibPhotoGalleryElement;
     }
 }
 declare namespace LocalJSX {
@@ -96,6 +120,12 @@ declare namespace LocalJSX {
     }
     interface SyLibHome {
     }
+    interface SyLibPhotoGallery {
+        /**
+          * Disparado quando não há nenhum álbum publicado: a home esconde a seção.
+         */
+        "onSyLibPhotoGalleryEmpty"?: (event: SyLibPhotoGalleryCustomEvent<void>) => void;
+    }
 
     interface SyLibContactModalAttributes {
         "open": boolean;
@@ -107,6 +137,7 @@ declare namespace LocalJSX {
         "sy-lib-contact-modal": Omit<SyLibContactModal, keyof SyLibContactModalAttributes> & { [K in keyof SyLibContactModal & keyof SyLibContactModalAttributes]?: SyLibContactModal[K] } & { [K in keyof SyLibContactModal & keyof SyLibContactModalAttributes as `attr:${K}`]?: SyLibContactModalAttributes[K] } & { [K in keyof SyLibContactModal & keyof SyLibContactModalAttributes as `prop:${K}`]?: SyLibContactModal[K] };
         "sy-lib-events-calendar": SyLibEventsCalendar;
         "sy-lib-home": SyLibHome;
+        "sy-lib-photo-gallery": SyLibPhotoGallery;
     }
 }
 export { LocalJSX as JSX };
@@ -116,6 +147,7 @@ declare module "@stencil/core" {
             "sy-lib-contact-modal": LocalJSX.IntrinsicElements["sy-lib-contact-modal"] & JSXBase.HTMLAttributes<HTMLSyLibContactModalElement>;
             "sy-lib-events-calendar": LocalJSX.IntrinsicElements["sy-lib-events-calendar"] & JSXBase.HTMLAttributes<HTMLSyLibEventsCalendarElement>;
             "sy-lib-home": LocalJSX.IntrinsicElements["sy-lib-home"] & JSXBase.HTMLAttributes<HTMLSyLibHomeElement>;
+            "sy-lib-photo-gallery": LocalJSX.IntrinsicElements["sy-lib-photo-gallery"] & JSXBase.HTMLAttributes<HTMLSyLibPhotoGalleryElement>;
         }
     }
 }

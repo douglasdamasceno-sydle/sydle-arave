@@ -990,6 +990,40 @@
   }
 }
 
+/* --- GALLERY SECTION (a grade e a tela cheia são o sy-lib-photo-gallery) ---
+   Fundo escuro: separa o calendário (claro) dos parceiros (branco) e faz as fotos saltarem */
+.gallery-section {
+  position: relative;
+  padding: var(--arave-section-space) 0;
+  overflow: hidden;
+  color: var(--arave-white);
+  background-color: var(--arave-purple-darker);
+  background-image:
+    radial-gradient(ellipse 45% 50% at 0% 0%, rgb(90 40 152 / 50%) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 45% at 100% 100%, rgb(90 40 152 / 30%) 0%, transparent 70%),
+    linear-gradient(180deg, var(--arave-purple-dark) 0%, var(--arave-purple-darker) 100%);
+
+  .section-subtitle {
+    color: var(--arave-yellow-main);
+    background-color: rgb(255 184 0 / 10%);
+    border-color: rgb(255 184 0 / 30%);
+  }
+
+  .section-title {
+    margin-bottom: 12px;
+    color: var(--arave-white);
+
+    &:focus {
+      outline: none; /* Recebe foco só via script (link do rodapé), sem anel visual */
+    }
+  }
+
+  .section-lead {
+    color: rgb(255 255 255 / 72%);
+    text-wrap: pretty;
+  }
+}
+
 /* --- SPONSORS SECTION --- */
 .sponsors-section {
   position: relative;
